@@ -1,0 +1,14 @@
+Thermal-DEM for TBM under neutron irradiation (Author: Yixiang Gan, version FEB-2013)
+
+Contact:
+Yixiang Gan
+Address:
+Particles and Grains Laboratory, School of Civil Engineering
+The University of Sydney, NSW 2006, Australia
+Email: yixiang.gan@sydney.edu.au
+
+
+Details can be found in the ./Docs directory, and the following paper:
+Yixiang Gan, Francisco Hernandez, Ratna Kumar Annabattula, Pavel Pereslavtsev, and Marc Kamlah (2013).
+
+Using modified version of voro++
