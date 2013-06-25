@@ -114,13 +114,13 @@ void Ccontact::increment_force(double dt)
 			  meff = pA->m;		// YG: effective mass for visco force		
 			}
 		else {
-			Reff = 2.0*pA->R*pB->R/(pA->R+pB->R);//two particles
+			Reff = pA->R*pB->R/(pA->R+pB->R);//two particles
 			meff = 2.0*pA->m*pB->m/(pA->m+pB->m); // YG: effective mass for visco force
 			}
-	E = 2.0*( pA->E*pB->E)/(pA->E+pB->E);//geometric mean
+	E = ( pA->E*pB->E)/(pA->E+pB->E);//geometric mean
 			
 	deltaNS = deltaN + (pA->R - pA->RS) + (pB->R - pB->RS); 
-	RSeff = 2.0*pA->RS*pB->RS/(pA->RS+pB->RS); // effective solid contact radius
+	RSeff = pA->RS*pB->RS/(pA->RS+pB->RS); // effective solid contact radius
 	
 	// with solid contact, otherwise only molten contact	
 	if(deltaNS < 0.0) {
@@ -153,7 +153,8 @@ void Ccontact::increment_force(double dt)
 	mu= parameter->friction_coefficient;
 	ct= parameter->tang_constant;
 	cr= parameter->roll_constant;
-	
+
+if(LIQUID_TRANSFER){
 	//exp
 	double dwater = 0.0;
 //	double KTHETA = 25.0*(CONTACT_ANGLE_MAX - CONTACT_ANGLE_MIN); //testing
@@ -174,6 +175,7 @@ void Ccontact::increment_force(double dt)
 //		CONTACT_ANGLE = CONTACT_ANGLE_MAX;
 	
 	if(dt == 0) CONTACT_ANGLE = CONTACT_ANGLE_MIN; //exp
+	}
 // ????? BUG
 //	a = sqrt(2*Reff*fabs(deltaN)); // PR's implementation
 	a = sqrt(1.0*Reff*fabs(deltaN)); // exact contact radius
@@ -210,7 +212,7 @@ void Ccontact::increment_force(double dt)
 // for solid contact, deltaNS < 0, deltaNB>=0!, Fn*nA negtive for compression.	
 //	Fn = nA*(deltaNS*E*aS - deltaNB*E*aB);				//normal force, imp. before 15.11.2010
 	fnold = fn; //renember the old value of normal force norm
-	fn = deltaNS*E*aS;
+	fn = 4.0/3.0 * deltaNS*E*aS;
 	Fn = nA*(fn + fcap);						//normal force
 	Ft += (uDotT*E* ct *aS*dt)  + (OmeMean^Ft)*dt; 		//increment norm and rotation for tangential force
 	Gn += (dOmeN*E*aS*aS*aS*dt) + (OmeMean^Gn)*dt ; 	//rolling moment cr is the numerical constant, dimensionless, for the rolling and twist 
@@ -305,9 +307,31 @@ bool Ccontact::rescale_slide(Cvector &F, double &F_norm, double F_norm_max)
 
 void Ccontact::EVALE_heat_flow()
 {
-	conductivity = 2* pA->k*pB->k/( pA->k+pB->k); //geo average
-	phi = 2.*conductivity*a*dT;
+	conductivity =  2.0* pA->k*pB->k/( pA->k+pB->k); //geo average
+	conductance();
+	phi = PI* conductivity/ALPHA *dT*(2.0*Reff)* HTotal;
+	phi_solid = 2.0*conductivity*a*dT;
 }	
+
+double  Ccontact::conductance() // for calculation of dimensionless conductance between particles
+{	
+//	ALPHA = parameter->ALPHA;
+	ALPHA = 10.0;
+	BETA = ALPHA * a/(2.0*Reff);
+	double H0 = 2.0*log(ALPHA)-3.9;
+	double HeHm = 0.0;
+	double BETAmin = 1.0; 
+	double BETAmax = 100.0;
+	if(BETA <= BETAmin) HeHm = 0.17*BETA*BETA;
+	if(BETA >= BETAmax) HeHm = 2.0*BETA/PI - 2.0 *log(BETA);
+	if(BETA < BETAmax && BETA > BETAmin) {
+		double Hmin = 0.17*BETAmin*BETAmin;
+		double Hmax = 2.0*BETAmax/PI - 2.0 *log(BETAmax);
+		HeHm = Hmin + (Hmax - Hmin) *(BETA - BETAmin)/(BETAmax - BETAmin);
+	} 
+	HTotal = H0 + HeHm;	
+}
+
 
 
 void Ccontact::set_me_in_main_cell()
@@ -369,11 +393,8 @@ void Ccontact::set_me_in_main_cell()
 	file<<c.fn<<"\t";
 	file<<c.age<<"\t";
 	file<<c.fcap<<"\t";
+//	file<<c.fwater<<"\t";
 	file<<c.dot_water_volume<<"\t";
-	
-// test output
-//	file<<c.voronoi_area<<"\t";
-//	file<<c.water_volume<<"\t";
 	file<<endl;
 	return file;
 }

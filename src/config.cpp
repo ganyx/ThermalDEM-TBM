@@ -59,7 +59,8 @@ void Cconfig::iterate(double time_step)
 	// calculation of global and local water pressure.
 	for(int ip=0; ip< P.size(); ip++) {
 		P[ip].water_pressure = 0.0;}
-		
+
+if(LIQUID_TRANSFER){
 	for(int ic=0;ic<C.size();ic++) if(C[ic].fcap >0) {
 		P[C[ic].A].water_pressure -= C[ic].fcap * C[ic].dx * P[C[ic].A].R /(P[C[ic].A].R+P[C[ic].B].R);
 		P[C[ic].B].water_pressure -= C[ic].fcap * C[ic].dx * P[C[ic].B].R /(P[C[ic].A].R+P[C[ic].B].R);
@@ -116,7 +117,7 @@ void Cconfig::iterate(double time_step)
 	
 	if(saturation >= MAX_SCAN && t>1.0 && flag_wetting)	flag_wetting=false;
 	if(saturation <= MIN_SCAN && t>1.0 && !flag_wetting) flag_wetting=true;
-
+	}
 }
 
 void Cconfig::predictor()
@@ -226,18 +227,21 @@ void Cconfig::sum_force()
 		P[C[ic].B].Fsum -= C[ic].F;
 		P[C[ic].A].Gsum +=  (C[ic].RA^C[ic].F) +C[ic].G;
 		P[C[ic].B].Gsum -=  (C[ic].RB^C[ic].F) +C[ic].G;
-		
+
+if(LIQUID_TRANSFER){
 // Additional force due to positive water pressure, CHECK !!
 		Cvector FWATER_A = C[ic].nA * (P[C[ic].B].positive_pressure)*C[ic].voronoi_area;
 		Cvector FWATER_B = C[ic].nA * (P[C[ic].A].positive_pressure)*C[ic].voronoi_area;
+//		C[ic].fwater = (P[C[ic].A].positive_pressure + P[C[ic].B].positive_pressure)*C[ic].voronoi_area/2.0;
 		P[C[ic].A].Fsum += FWATER_A;
 		P[C[ic].B].Fsum -= FWATER_B;
-		
+		}
 		dx = C[ic].dX;
 
 		stress+=   (C[ic].F| dx);
 	}
-	
+
+if(LIQUID_TRANSFER){	
 	double positive_pressure =0.0;
 	for(int ip=0; ip<P.size();ip++){
 // positive pressure, contribute to the full domain, using voronoi_volume !
@@ -248,7 +252,8 @@ void Cconfig::sum_force()
 	
 	for(int ii=0;ii<3;ii++)
 		stress.x[ii][ii] -= positive_pressure;
-
+	}
+	
 	if(PSEUDO_2D)	stress/=(cell.L.x[0]*cell.L.x[1]);  
 	else	stress/=(cell.L.x[0]*cell.L.x[1]*cell.L.x[2]);  
 	
@@ -370,8 +375,12 @@ if(Voronoi_Update){
 						CThread[tid].push_back(cont); 
 					}											
 				}
+			}
+			if(P[ip].v_neighbors[in] < 0){
+				// the grain is close to the wall region
+			} 
 			}}
-		}
+			
 	for(int it=0; it<NTHREADS; it++){
 		std::vector <Ccontact> Ctemp = C;
 		C.insert(C.end(), CThread[it].begin(),CThread[it].end());

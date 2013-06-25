@@ -11,11 +11,11 @@ omp_set_num_threads(NTHREADS); // MPI
      double wall_time_used;
 
 	
-cout<<endl<<endl<<"Verion 2012 for Capillary Water Transport"<<endl<<endl;
-cout<<"Type the action you want to perform:"<<endl;
+cout<<endl<<endl<<"Verion 2013 for Integrated DEM simulations"<<endl<<endl;
+cout<<"Type the action you want to perform (check the documentation for more details):"<<endl;
 cout<<"\tCREATE: creates a new random configuration"<<endl;
 cout<<"\tEVOLVE: reads an existing configuration and makes it evolves"<<endl;
-cout<<"\tPOST_PROCESS: reads an existing configuration and measures all sort of averages"<<endl;
+//cout<<"\tPOST_PROCESS: reads an existing configuration and measures all sort of averages"<<endl;
 //cout<<"\tVISUALISATION: reads an existing configuration and draws it on an opengl basis"<<endl;
 
 string action;
@@ -44,52 +44,18 @@ if(action=="CREATE")//not parallel
 if(action=="EVOLVE")//can be parallel
 	{
 	Crun Lrun[1];//24 is the max number of processor
-	
-	int Ntask;
-	for(Ntask=0;Ntask<1;Ntask++)
-		{	
-		Lrun[Ntask].init_evolve();
-	    string one_more;
-	   	get_secure("Do you want to add one more task?","ONE_MORE_TASK","NO_MORE_TASK", one_more);
-//		if(one_more=="ONE_MORE_TASK")cout<<"Ready to get the new task"<<endl;
-	    if(one_more=="NO_MORE_TASK"){cout<<"No more task, ready to simulate"<<endl;Ntask++;break;}
-		}
-//	cout<<"Number of task to be run in parallel:\t"<<Ntask<<endl;	
-//	for(int n=0;n<Ntask;n++)Lrun[n].start();// call the function evolve() for each run
-//	for(int n=0;n<Ntask;n++)Lrun[n].wait();// wait for every one to finish
+		
+	Lrun[0].init_evolve();
 	start = clock(); t0 = time(NULL);
 	Lrun[0].evolve();
 	
 	end = clock();t1 = time(NULL);
-//	cpu_time_used = difftime(end, start);
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC / NTHREADS;
 	wall_time_used = t1-t0;
 	cout<<"Number of CPUs:\t"<<NTHREADS<<endl;
 	cout<<"CPU time (s):\t"<<cpu_time_used<<endl;
 	cout<<"Wall time (s):\t"<<wall_time_used<<endl;
-			
-//	cout<<"Number of task to be run in parallel:\t"<<Ntask<<endl;	
-//	for(int n=0;n<Ntask;n++)Lrun[n].start();// call the function evolve() for each run
-//	for(int n=0;n<Ntask;n++)Lrun[n].wait();// wait for every one to finish
 	}
-
-if(action=="POST_PROCESS")
-{
-	Crun_post_process Lrun[1];//24 is the max number of processor
-
-	int Ntask;
-	for(Ntask=0;Ntask<1;Ntask++)
-		{	
-		Lrun[Ntask].init();
-	    string one_more;
-	   	get_secure("Do you want to add one more task?","ONE_MORE_TASK","NO_MORE_TASK", one_more);
-		if(one_more=="ONE_MORE_TASK")cout<<"Ready to get the new task"<<endl;
-	    if(one_more=="NO_MORE_TASK"){cout<<"No more task, ready to simulate"<<endl;Ntask++;break;}
-		}
-	cout<<"Number of task to be run in parallel:\t"<<Ntask<<endl;	
-//	for(int n=0;n<Ntask;n++)Lrun[n].start();// call the function evolve() for each run
-//	for(int n=0;n<Ntask;n++)Lrun[n].wait();// wait for every one to finish
-}
 
 	return(1);
 }

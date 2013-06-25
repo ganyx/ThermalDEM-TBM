@@ -30,6 +30,7 @@ class Ccontact
 
 	bool  TANGENTIAL_SLIDE, TWIST_SLIDE,ROLLING_SLIDE;	
 	double phi;				/**<Heat rate through the contact.*/
+	double phi_solid;
 	double production;		/**<Heat production of the contact.*/
 	double production_slide,production_normal,  production_rolling, production_twist;
 	double conductivity;
@@ -59,6 +60,7 @@ class Ccontact
 	bool AM_I_CONTACTING();							/**<Return true if there is a contact, false if not*/
 	void set_me_in_main_cell();
 	void PRINT();
+	double conductance();
 	Ccontact();
 	Ccontact(Cparticle *,Cparticle *, Ccell *, Cparameter *);
 	
@@ -83,6 +85,11 @@ class Ccontact
 	double dot_water_volume;
 	double dwater_volume;
 	double fcap; // the magnitude of capillary force
+//	double fwater; // liquid force coming from air pressure.
 	double CONTACT_ANGLE;
+	
+	double ALPHA;
+	double BETA;
+	double HTotal;
 };
  

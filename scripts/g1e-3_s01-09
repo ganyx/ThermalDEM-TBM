@@ -1,4 +1,4 @@
-./SD_parallel<<!
+./DEM<<!
 EVOLVE 
 ./data/prepack-p001	51	
 ./data/g1e-3_s0109  1

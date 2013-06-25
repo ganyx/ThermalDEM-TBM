@@ -183,29 +183,43 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		{ 
 			screen.next += 1;
 			int nc=0, np=0;
+
+if(LIQUID_TRANSFER){
 			for(int ip=0;ip<config.P.size();ip++) {
 				if(config.P[ip].water_volume >0.0) np++;}
-					
+			}
+
 			double angle_max = 0.0;
 			double angle_min = 10.0;
 			double angle_ave = 0.0;
+if(LIQUID_TRANSFER){
 			for(int ic=0;ic<config.C.size();ic++) {
 				if(config.C[ic].CONTACT_ANGLE > angle_max) angle_max = config.C[ic].CONTACT_ANGLE;
 				if(config.C[ic].CONTACT_ANGLE < angle_min) angle_min = config.C[ic].CONTACT_ANGLE;
 				angle_ave += config.C[ic].CONTACT_ANGLE;
 				}
 				angle_ave /= config.C.size();
+			}
 			
 			cout<<endl<<endl<<"Case: "<<where_save.path.c_str()<<endl; 
 			cout<<"Progress: "<< config.t*100./(tend-tstart)<<" \% done"<<"\tTime step: "<<dt<<endl;
 			cout<<"Number of grains: "<<config.P.size()<<"\tNumber of contact: "<<config.C.size()<<endl;
+if(LIQUID_TRANSFER)
 			cout<<"MAX CONTACT_ANGLE:"<<180.0/PI*angle_max<<"\tMIN CONTACT_ANGLE:"<<180.0/PI*angle_min
 			<<"\tAVE CONTACT_ANGLE:"<<180.0/PI*angle_ave<<endl;
 //			cout<<"Number of bonded contacts: "<<nc<<"\tNumber of melted particles: "<<np<<endl;
-			cout<<"Number of wetted grains: "<<np<<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"<<config.saturation<<endl;
-//			cout<<"System temperature: "<< config.parameter.average_temperature<<endl;
-//			cout<<"Heat in/out of the system:\t"<<config.heat_in<<"\t"<<config.heat_out<<endl;
-//			cout<<"Heat generation modes (N/S/T/R):"<<"\t"<<config.PN<<"\t"<<config.PS<<"\t"<<config.PT<<"\t"<<config.PR<<endl;
+
+if(LIQUID_TRANSFER)
+			cout<<"Number of wetted grains: "<<np<<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"
+			<<config.saturation<<endl;
+			
+if(config.simule_thermal_conduction)
+		cout<<"System temperature: "<< config.parameter.average_temperature<<endl;
+		
+if(config.simule_thermal_production){
+			cout<<"Heat in/out of the system:\t"<<config.heat_in<<"\t"<<config.heat_out<<endl;
+			cout<<"Heat generation modes (N/S/T/R):"<<"\t"<<config.PN<<"\t"<<config.PS<<"\t"<<config.PT<<"\t"<<config.PR<<endl;
+		}
 			if(config.cell.shear_work_control)
 				cout<<"Work control: "<<"\t"<<config.cell.shear_work_input
 				<<"\t The system: "<<config.cell.shear_stress_in*config.cell.shear_rate<<endl;		
