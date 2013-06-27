@@ -87,6 +87,12 @@ void Cparticle::predictor(double dt,double dt2_on_2)
 	// Cap mod
 	RS=R;
 	dRS=0.0;
+	
+	// Polymer layer
+	if(BRANCH=="LIB"){
+		dRS=0.0;
+		continue;
+	}
 }
 
 void Cparticle::corrector(double dt_on_2,Ccell &cell)

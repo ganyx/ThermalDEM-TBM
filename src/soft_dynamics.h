@@ -33,6 +33,7 @@ using namespace std; // for a easier use of cin and cout
 #define WALL_KD	5e-4
 #define WALL_DAMP 0.001
 #define GLOBAL_DAMPING	1.0
+#define LOCAL_DAMPLING	0.1
 
 //#define COMP_FRACTION 0.10 /**< Composite fraction, number fraction */
 bool LIQUID_TRANSFER;
@@ -55,6 +56,7 @@ bool LIQUID_TRANSFER;
 #define WETTING_RATE	0.0005
 
 bool Voronoi_Update;
+string BRANCH;
 
 #define PSEUDO_2D 0 /**< 1= yes 0 = no (then 3D)*/	     
 	     

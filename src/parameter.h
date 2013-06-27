@@ -7,6 +7,10 @@ public:
 	double friction_coefficient;
 	double tang_constant; 			/**< Numerical constant for tangantial deflection.*/        
 	double roll_constant;			/**< Numerical constant for rolling and twist.*/    
+	
+	double VOL_polymer;				/**< volume fraction of polymer */
+	double MODULE_polymer;			/**< Elastic modulus of polymer layer */
+	double VISCO_polymer;			/**< Viscosity of polymer layer */
 
 	double specific_heat;           /**< Specific Heat of the bulk material (J/kg/K).*/
 	double bulk_conductivity;       /**< Bulk conductivity (W/m/K).*/

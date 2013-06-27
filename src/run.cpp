@@ -52,9 +52,12 @@ void Crun::init_evolve(void)
 		config.cell.stick_slip=0;
 		
 		//get the normal stress or volume control;
-		get_secure("Do you want to control the normal stress or the volume", "NORMAL_STRESS","VOLUME", choice);
+		get_secure("Do you want to control the normal stress or the volume", "NORMAL_STRESS","VOLUME", "STRAIN_RATE", choice);
 		if(choice=="NORMAL_STRESS"){config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext; }
 		if(choice=="VOLUME"){config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;}
+		if(choice=="STRAIN_RATE"){
+			config.cell.normal_stress_control=false; config.cell.Adilat=0;
+			double strain_rate; cin>>strain_rate; config.cell.Vdilat = strain_rate*config.cell.L.x[1];}
 	
 		//get the shear stress or shear rate control;
 		get_secure("Do you want to control the shear stress or the shear rate",
@@ -77,6 +80,12 @@ void Crun::init_evolve(void)
 	get_secure("Enter the coefficient of friction","FRICTION", config.parameter.friction_coefficient);
 	get_secure("Enter the constant for tangential contact (usually 1)","TANG_CONSTANT", config.parameter.tang_constant);
 	get_secure("Enter the constant of rolling-twising resistance (usually 1)","ROLL_CONSTANT" ,config.parameter.roll_constant);
+
+	if(BRANCH=="LIB"){
+		get_secure("Volume fraction (polymer)","VOL_POLYMER",config.parameter.VOL_polymer);
+		get_secure("Elastic modulus (polymer)","MODULE_POLYMER",config.parameter.MODULE_polymer);
+		get_secure("Viscosity (polymer)","VISCO_POLYMER",config.parameter.VISCO_polymer);
+	}
 	
 	get_secure("Enter the conductivity of bulk grains","CONDUCTIVITY",config.parameter.bulk_conductivity);
 	get_secure("Enter the specific_heat of bulk grains","SPECIFIC_HEAT",config.parameter.specific_heat);

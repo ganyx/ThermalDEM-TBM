@@ -274,10 +274,13 @@ if(LIQUID_TRANSFER){
 	//ROLLING_SLIDE 		= false;
 	//TWIST_SLIDE 		= false;
 	//}
-
-	double xi;
-	xi = 0.1;
-	Fvis = Vn *xi;
+	double fvisold = nA*Fvis;
+	
+	Fvis = Vn *LOCAL_DAMPLING;
+	
+	if(BRANCH=="LIB"){ // need to check formulation !!
+		Fvis = nA*(fvisold + parameter->MODULE_polymer*(nA*Vn *PI*a*a - fvisold/parameter->VISCO_polymer));
+	}
 
 	Fela=Fn+Ft;
 

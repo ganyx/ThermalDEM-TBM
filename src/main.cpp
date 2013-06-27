@@ -13,12 +13,6 @@ omp_set_num_threads(NTHREADS); // MPI
 	
 cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
 
-cout<<"Select the branch for simulations, branches provide typical parameter presetting:"<<endl;
-cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
-cout<<"\tNORMAL: Standard input"<<endl;
-//string branch;
-//cin>> branch;
-
 cout<<"Type the action you want to perform (check the documentation for more details):"<<endl;
 cout<<"\tCREATE: creates a new random configuration"<<endl;
 cout<<"\tEVOLVE: reads an existing configuration and makes it evolves"<<endl;
@@ -51,6 +45,14 @@ if(action=="CREATE")//not parallel
 
 if(action=="EVOLVE")//can be parallel
 	{
+
+cout<<"Select the branch for simulations, branches provide typical parameter presetting:"<<endl;
+cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
+cout<<"\tCAPDEM: DEM for capillary interaction"<<endl;
+cout<<"\tThermal-DEM:"<<endl;
+cout<<"\tNORMAL: Standard input"<<endl;
+cin>> BRANCH;
+
 	Crun Lrun[1];//24 is the max number of processor
 		
 	Lrun[0].init_evolve();
