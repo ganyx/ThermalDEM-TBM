@@ -27,6 +27,9 @@ public:
 	double Mmin;					/**< Smaller particle mass*/
 	double Mmax;					/**< Higher particle mass*/
 	
+	int COMPOSITION;
+	double COMP_FRACTION;
+	
 	double total_mass;
 	double average_temperature;
 	
@@ -34,7 +37,6 @@ public:
 	double J;						/**< Dimentionless thermal time: \f$ J = thermal_time/inertial time. \f$. */
 	double I;						/**< Dimentionless inertial number: \f$ I_i= \dot \gamma \sqrt{\frac{m}{PR}}\f$. */
 
-	double COMP_FRACTION;
 	double INITIAL_SATURATION;
 	double FIXED_SATURATION;
 	double SURFACE_TENSION;

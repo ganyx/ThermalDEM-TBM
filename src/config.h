@@ -1,7 +1,7 @@
 
 class Cconfig
 {
-	void set_random_grain(int,int,int);					/**< set particle randomly in a cell (flowing-grains as well as wall-grains). Take as parameters the number of flowing grains, the number of grains on the bot wall and on the top wall*/
+	void set_random_grain(int,std::vector <double> &radius);					/**< set particle randomly in a cell (flowing-grains as well as wall-grains). Take as parameters the number of flowing grains, the number of grains on the bot wall and on the top wall*/
    
 	void predictor();			/**< Integrate the particle motion accroding to their acceleration.*/
 	void renew_contact_list();	/**< Get the new contact list.*/ 
@@ -39,7 +39,8 @@ class Cconfig
 
 	void create_random();		/**< Create a new random config. */
 	void set_wall_grain(int, int);/**< Set the grain of the walls as well as the planes if any. */
-	void set_radius(std::vector <double> &radius, int &Nf);/**< Create a list of radius with either a uniform distribution of fractale distribution. */
+	void set_radius(std::vector <double> &radius, int &Nf);/**< Create a list of radius with either a uniform distribution of fractal distribution. */
+	
 	void fread(Cin_out); 		/**<Read from a file.*/
 //	void fprint(Cin_out);		/**<Print in a file.*/
 	void fprint(Cin_out);		/**<Print in a file.*/

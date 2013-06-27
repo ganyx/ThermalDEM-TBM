@@ -22,6 +22,7 @@ public:
 	Cvector Gext;          /**< External moment the particle is subjected to.*/
 
 	double R;              /**< Particle radius. */
+	double R_scale;			/**< Scaled radius, for initial packing */
 	double m;              /**< Particle mass. */
 	double J;              /**< Particle moment of inertia.*/
 	double RHO;				// for no expansion

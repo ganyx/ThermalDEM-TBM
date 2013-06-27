@@ -29,6 +29,7 @@ class Crun //: public QThread //used to run parallel thread
    	 
    	 
    // void init_create();
+   void init_packing();
     void init_evolve();
     void evolve();                /**< Iterate the config between tstart and tend with dt step.*/ 
    	

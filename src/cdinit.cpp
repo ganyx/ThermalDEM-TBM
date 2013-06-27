@@ -64,8 +64,14 @@ void Cconfig::create_random()
 	}
 	
 
-	
-	get_secure("Enter the type of grain size distribution", "FRACTAL", "UNIFORM","VOLUME",parameter.GSD);
+	get_secure("Enter the number of compositions", "COMPOSITION", parameter.COMPOSITION);
+	if(parameter.COMPOSITION<1) parameter.COMPOSITION=1;
+		
+	std::vector <double> radius;
+	double packing;
+
+	for(int i=0;i<parameter.COMPOSITION;i++){
+	get_secure("Enter the type of grain size distribution", "FRACTAL", "UNIFORM","VOLUME", parameter.GSD);
 	get_secure("Enter the minimum diameter", "DMIN", parameter.Dmin);
 	get_secure("Enter the minimum diameter", "DMAX", parameter.Dmax);
 	if(parameter.GSD=="UNIFORM") get_secure("Enter the number of flowing grains (do not include the wall-grains)","NPART_FLOW",Npart_flow);
@@ -75,8 +81,33 @@ void Cconfig::create_random()
 			 get_secure("Enter the fractal dimention of the grain size distribution","FRACTAL_DIM", parameter.fractal_dim);
 			 get_secure("Enter the solid fraction wanted","SOLID_FRACTION", cell.solid_fraction);
 		 }
+		 
+	srand( (unsigned int) time(NULL)+getpid());//Init of random
+	cout<<endl<<"Start the random setting of grains"<<endl;
+	
+	set_wall_grain(Npart_wall_bottom, Npart_wall_top); //set the grain of the wall and the planes (if there is any wall)
+	
+	std::vector <double> radius_tmp;
+	set_radius(radius_tmp, Npart_flow);
+	radius.insert(radius.end(),radius_tmp.begin(),radius_tmp.end());
+	}
+	
+	cout<<"Number of flowing grains\t"<<radius.size()<<endl;
+	
+	get_secure("Enter the initial packing factor", "PACKING", packing); 
+	if(packing<0 || packing>=1) {
+		cout<<"This is not a realistic value for the initial packing factor! Setting to 0.5."<<endl;
+		packing=0.5;
+		}
+	cout<<"A high initial packing factor may result in residual stresses after the packing stage."<<endl;
+	
+	// adjusting cell.L.x[1] for initial packing: fix box size, and expansion of grains.
+	double volume=0.0;
+	for(int ip=0;ip<radius.size();ip++) volume += pow(radius[ip],3.0);
+	cell.L.x[1] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[2]);
+	cout<<"Adjusted cell height for the initial packing\t"<<cell.L.x[1]<<endl;
 
-	set_random_grain(Npart_flow, Npart_wall_bottom, Npart_wall_top); 
+	set_random_grain(Npart_flow, radius); 
 
 
 	for(int ip=0;ip<P.size();ip++)//example of how to initiate things, mass is to be initiated here, it won't be change after
@@ -102,6 +133,7 @@ void Cconfig::create_random()
 		}
 	}
 	cout<<"Random configuration created: SUCCESS"<<endl<<endl;	
+
 }
 
 double UNIFORM_RANDOM_DOUBLE(double min, double max)
@@ -200,18 +232,8 @@ void  Cconfig::set_radius(std::vector <double> &radius, int &Nf)
 //	cout<<radius[0]<<radius[Nf-1];
 }
 
-void Cconfig::set_random_grain(int Nf, int Nb, int Nt)
+void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
 {
-
-	srand( (unsigned int) time(NULL)+getpid());//Init of random
-
-	cout<<endl<<"Start the random setting of grains"<<endl;
-	
-	set_wall_grain(Nb,Nt);//set the grain of the wall and the planes (if there is any wall)
-	
-	std::vector <double> radius;
-	set_radius(radius,Nf);
-	cout<<"Number of flowing grains\t"<<radius.size()<<endl;
 	
 	Cmesh mesh(cell.L, MESH_SIZE*parameter.Dmax, cell); 
 	
@@ -220,8 +242,8 @@ void Cconfig::set_random_grain(int Nf, int Nb, int Nt)
 		bool position_occupied;
 		
 		Cparticle part;
-		part.R=radius[p];
-		
+		part.R=radius[p]/R_SCALE_FACTOR; // scaled for random samples for initial packing stage
+		part.R_scale = radius[p];
 		part.id=P.size();
 		part.AM_I_BOUNDARY=0;
 		P.push_back(part);//save the new particle	
@@ -268,5 +290,6 @@ cout<<"Actual solid fraction:\t"<<frac_sol <<endl;
 	*/
 	cout<<"All the grains have found their position: SUCCESS"<<endl;
 }
+
 
 

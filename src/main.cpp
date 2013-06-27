@@ -11,7 +11,14 @@ omp_set_num_threads(NTHREADS); // MPI
      double wall_time_used;
 
 	
-cout<<endl<<endl<<"Verion 2013 for Integrated DEM simulations"<<endl<<endl;
+cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
+
+cout<<"Select the branch for simulations, branches provide typical parameter presetting:"<<endl;
+cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
+cout<<"\tNORMAL: Standard input"<<endl;
+//string branch;
+//cin>> branch;
+
 cout<<"Type the action you want to perform (check the documentation for more details):"<<endl;
 cout<<"\tCREATE: creates a new random configuration"<<endl;
 cout<<"\tEVOLVE: reads an existing configuration and makes it evolves"<<endl;
@@ -21,8 +28,8 @@ cout<<"\tEVOLVE: reads an existing configuration and makes it evolves"<<endl;
 string action;
 cin>> action;
 
-if(action!="CREATE" && action!="EVOLVE" && action!="POST_PROCESS")
-	{serror="The action '"+action+"' does not exit. Choices are  'CREATE', 'EVOLVE' or 'POST_PROCESS'";
+if(action!="CREATE" && action!="EVOLVE")
+	{serror="The action '"+action+"' does not exit. Choices are  'CREATE' / 'EVOLVE'";
 	STOP("main.cpp", "main()",serror);}
 	
 cout<<"The selected action is: "<<action<<endl<<endl;
@@ -37,6 +44,7 @@ if(action=="CREATE")//not parallel
 	run.where_save.check_path('w');//check wheter the path already exist. If yes, stop.	
 	
 	run.config.create_random();	//create
+	run.init_packing();
 	run.config.fprint(run.where_save);//save
 }
 

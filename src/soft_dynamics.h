@@ -22,9 +22,10 @@ using namespace std; // for a easier use of cin and cout
 #include <fstream> /**<Used to open files.*/ 
 #include <sstream> /**<Used to convert integer into string.*/
 
-#define DIM 3  /**< Space dimension. */ 
+#define DIM 3  	/**< Space dimension. */ 
 #define PI 3.1415926535 
-#define MESH_SIZE 2.0  /** ratio of mesh size and the maximum particle diameter */
+#define R_SCALE_FACTOR 2.0		/**< scaling factor for initial packing, only for CREATE stage */
+#define MESH_SIZE 2.0  	/**< ratio of mesh size and the maximum particle diameter */
 #define INIT_BOND 0
 #define BOND_STRENGTH 20.0
 #define SHEAR_LIMIT 0.5
@@ -114,6 +115,7 @@ class Cprofile;
 #include "profile.cpp"
 #include "run.cpp"
 #include "post_process.cpp"
+#include "initialpacking.cpp"
 //#include "post_process/spatial.cpp"
 //#include "post_process/grid.cpp"
 //#include "post_process/node.cpp"

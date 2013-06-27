@@ -19,6 +19,7 @@ SOURCES += src/cdinit.cpp \
  src/cell.cpp \
  src/config.cpp \
  src/contact.cpp \
+ src/initialpacking.cpp \
  src/inout.cpp \
  src/main.cpp \
  src/matrix.cpp \

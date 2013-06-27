@@ -107,10 +107,10 @@ void Crun::init_evolve(void)
 	get_secure("Enter the GRAVITY", "GRAVITY", config.GRAVITY);
 	get_secure("Enter the MAX_SCAN_SATURATION", "MAX_SCAN", config.MAX_SCAN);
 	get_secure("Enter the MIN_SCAN_SATURATION", "MIN_SCAN", config.MIN_SCAN);
-	}
 	get_secure("Enter the SURFACE_TENSION", "SURFACE_TENSION", config.parameter.SURFACE_TENSION);
 //	get_secure("Enter the LIQUID_DIFFUSION", "LIQUID_DIFFUSION", config.parameter.LIQUID_DIFFUSION);
 	config.parameter.LIQUID_DIFFUSION = WATER_CONDUCTION_RATIO/config.parameter.SURFACE_TENSION;
+	}
 	//End of parameter input
 		
 		
