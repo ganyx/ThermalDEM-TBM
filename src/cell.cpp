@@ -49,9 +49,13 @@ Ccell::Ccell()//initialisation
 void Ccell::predictor(double dt,double dt2_on_2)
 {
 	if(boundary=="WALL_INCLINED")return;//nothing to do 
-	
+	if(normal_strain_control){
+		Yshift = Vdilat*dt;
+		L.x[1] += Yshift;
+		dilat_rate=Vdilat/L.x[1];
+	}
 	//for shear only
-	if(normal_stress_control)//if the normal stress is controled
+	else if(normal_stress_control)//if the normal stress is controled
 		{
 			// PR impl. of normal stress control
 			Yshift = Vdilat*dt + Adilat*dt2_on_2;

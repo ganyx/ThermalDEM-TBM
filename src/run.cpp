@@ -57,7 +57,8 @@ void Crun::init_evolve(void)
 		if(choice=="VOLUME"){config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;}
 		if(choice=="STRAIN_RATE"){
 			config.cell.normal_stress_control=false; config.cell.Adilat=0;
-			double strain_rate; cin>>strain_rate; config.cell.Vdilat = strain_rate*config.cell.L.x[1];}
+			config.cell.normal_strain_control=true;
+			double strain_rate; cin>>strain_rate; config.cell.Vdilat = -strain_rate*config.cell.L.x[1];}
 	
 		//get the shear stress or shear rate control;
 		get_secure("Do you want to control the shear stress or the shear rate",

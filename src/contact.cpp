@@ -27,7 +27,8 @@ Ccontact::Ccontact(Cparticle *partA, Cparticle *partB, Ccell *c, Cparameter *par
 	age=0;
 	aB = 0.0; // initiation of bonding contact radius
 	deltaNB = 0.0;
-	fn=0;
+	fn=0; 
+	fvis=0.0;
 	pA=partA;
 	pB=partB;
 	A = partA->id;
@@ -98,7 +99,6 @@ void Ccontact::increment_force(double dt)
 //	double dNB = 0.0;
 	double h0 = 0.1; //exp
 	double h = h0;
-//	double eta = 1.0; // \eta for viscoucity
 	
 	Cvector Vn;
 	Vn = alpha*dV;
@@ -274,12 +274,14 @@ if(LIQUID_TRANSFER){
 	//ROLLING_SLIDE 		= false;
 	//TWIST_SLIDE 		= false;
 	//}
-	double fvisold = nA*Fvis;
 	
 	Fvis = Vn *LOCAL_DAMPLING;
 	
-	if(BRANCH=="LIB"){ // need to check formulation !!
-		Fvis = nA*(fvisold + parameter->MODULE_polymer*(nA*Vn *PI*a*a - fvisold/parameter->VISCO_polymer));
+	if(BRANCH=="LIB" && parameter->VOL_polymer>0.0){ // need to check formulation !!
+		// Maxwell model for visco-elasticity
+		if(dt==0) fvis=0.0;
+		fvis = fvis + dt*parameter->MODULE_polymer*(nA*Vn/(pA->R + pB->R) *PI*a*a - fvis/parameter->VISCO_polymer);
+		Fvis = nA*fvis;
 	}
 
 	Fela=Fn+Ft;
@@ -392,7 +394,18 @@ void Ccontact::set_me_in_main_cell()
 
  ofstream & operator<<(ofstream &file,Ccontact c)
  {
-	file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
+ if(BRANCH=="LIB"){
+ 	file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
+	file<<c.Ft<<c.Gn<<c.Gt;
+	file<<c.fn<<"\t";
+	file<<c.age<<"\t";
+	file<<c.fvis<<"\t";
+	file<<c.dot_water_volume<<"\t";
+	file<<endl;
+	return file;
+	}
+ else{
+ 	file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
 	file<<c.Ft<<c.Gn<<c.Gt;
 	file<<c.fn<<"\t";
 	file<<c.age<<"\t";
@@ -400,7 +413,8 @@ void Ccontact::set_me_in_main_cell()
 //	file<<c.fwater<<"\t";
 	file<<c.dot_water_volume<<"\t";
 	file<<endl;
-	return file;
+ 	return file;
+	}
 }
 	
 ifstream & operator>>(ifstream &file,Ccontact &c)

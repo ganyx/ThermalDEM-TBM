@@ -41,6 +41,7 @@ class Ccell
 	double slope;				/**<slope angle on the cell, in degree.*/ 
 
 	bool normal_stress_control, shear_stress_control, gradT_control;
+	bool normal_strain_control;
 
 	Cmatrix stress;
 

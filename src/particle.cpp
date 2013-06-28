@@ -42,14 +42,17 @@ void Cparticle::predictor(double dt,double dt2_on_2)
 //	Lm = 1.0*c;	// set to a small fraction of the total latent heat of the particle for a thin shell.
 	double dl = 0.0;
 	
-	if(dt==0) { // recover previous value of RS from L for the first step
+	if(dt==0 && MELTING) { // recover previous value of RS from L for the first step
 		RS = R*R*R - 3.0/4.0 *L /PI/RHO/Lm; 
 		RS = pow(RS, 1.0/3.0);	
 		}
+	else if(!MELTING) RS=R;
+	
 	X += (V*dt)+ (A*dt2_on_2);
 	V += (A*dt);
 	Ome+= (OmeDot*dt);
-	
+
+if(MELTING){
 	// Melting/cooling condition here: T<Tm; T=Tm, 0<L<Lm; T=Tm, L=Lm;	
 	if(T<Tm) 
 	{ 
@@ -83,15 +86,18 @@ void Cparticle::predictor(double dt,double dt2_on_2)
 			RS=0.25*R;dRS=0.0;}
 		dRS = RS - RS_old;
 	}
-	
+	}
+//if(!MELTING){T += Tdot*dt;
 	// Cap mod
-	RS=R;
-	dRS=0.0;
-	
+	//RS=R;
+	//dRS=0.0;
+//}
 	// Polymer layer
 	if(BRANCH=="LIB"){
+		if(dt==0) { // reset elasto-visous effects at the beginning, not ready for re-run.
+			RS=R; R=(1.0+r_polymer)*RS;
+		}
 		dRS=0.0;
-		continue;
 	}
 }
 
@@ -161,21 +167,6 @@ void Cparticle::set_me_in_main_cell(Ccell &cell)
 				T+=cell.DeltaT;			//increment the temperature
 			}	
 	}
-}
-
-ofstream & operator<<(ofstream &file,Cparticle p)
-{
-	file<<p.X<<p.V<<p.Ome; //vector
-	file<<p.R<<"\t"<<p.m<<"\t"<<p.water_pressure<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
-	file<<endl;	//new line
- 	return file;
-}
-
-ifstream & operator>>(ifstream &file,Cparticle &p)
-{
-	file>>p.X>>p.V>>p.Ome; 	//vector
-	file>>p.R>>p.m>>p.water_pressure>>p.saturation>>p.water_volume;	//scalar
- 	return file;
 }
 
 Cparticle::Cparticle(void)
@@ -283,7 +274,28 @@ void Cparticle::get_neighbour(Ccell &cell)
 	if (my_box[0]->am_I_top) neighbour.push_back(cell.plan_top); 
 }
 
+ofstream & operator<<(ofstream &file,Cparticle p)
+{
+	if(BRANCH=="LIB"){
+	file<<p.X<<p.V<<p.Ome; //vector
+	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
+	file<<endl;	//new line
+ 	return file;
+	}
+	else{
+	file<<p.X<<p.V<<p.Ome; //vector
+	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
+	file<<endl;	//new line
+ 	return file;
+	}
+}
 
+ifstream & operator>>(ifstream &file,Cparticle &p)
+{
+	file>>p.X>>p.V>>p.Ome; 	//vector
+	file>>p.R>>p.m>>p.water_pressure>>p.saturation>>p.water_volume;	//scalar
+ 	return file;
+}
 
 
 

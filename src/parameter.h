@@ -32,7 +32,7 @@ public:
 	double Mmax;					/**< Higher particle mass*/
 	
 	int COMPOSITION;
-	double COMP_FRACTION;
+	int COMP_FRACTION; 			/**< Only for two speices, number of the speice 1 */
 	
 	double total_mass;
 	double average_temperature;

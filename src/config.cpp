@@ -16,7 +16,8 @@ void Cconfig::iterate(double time_step)
 	if(LIQUID_TRANSFER) liquid_transfer();
 	
 	// water input, controlling water volume
-	if(LIQUID_TRANSFER){
+	if(LIQUID_TRANSFER)
+	{
 
 	if(dt==0) flag_wetting = true;
 
@@ -49,7 +50,9 @@ void Cconfig::iterate(double time_step)
 		P[ip].V -= cell.rigid_velocity;
 
 	if(dt==0) {
-		for(int ip=0; ip< P.size(); ip++) P[ip].V *= 0.0;}
+		for(int ip=0; ip< P.size(); ip++) {
+			P[ip].V *= 0.0; P[ip].Ome *= 0.0;
+		}}
 			
 	for(int ip=0; ip< P.size(); ip++) {
 		P[ip].V *= (1.0 - GLOBAL_DAMPING*dt); // Global damping

@@ -2,34 +2,30 @@
 
 void  Cconfig::update_particle()
 {
-	int nloop = 100; // convert percentage of compositions
-	int nint = nloop*parameter.COMP_FRACTION;
-	int i=0;
 	
 	for(int ip=0;ip<P.size();ip++)
 	{
-//		if(ip < COMP_FRACTION *P.size()){ // Biotite
-		if(i<nint){ // Biotite
+		if(ip<parameter.COMP_FRACTION){ // Spiece-1: Biotite
 				P[ip].Tm = 21.0;
 				P[ip].Lm = 5.0;
 				P[ip].k = parameter.bulk_conductivity;
+				P[ip].E = parameter.MODULE_N;
 		}
-		else { // Quartz, Plagioclase, K-feldstar
+		else { // Speice-2: Quartz, Plagioclase, K-feldstar
 			P[ip].Tm = 25.0;
 			P[ip].Lm = 3.0;
 			P[ip].k = 5.0*parameter.bulk_conductivity;
+			P[ip].E = parameter.MODULE_N / 10.0;
 		}
 		
 		P[ip].c = parameter.specific_heat;
-		P[ip].E = parameter.MODULE_N;
 //		P[ip].k = parameter.bulk_conductivity;
 		P[ip].e = parameter.thermal_expansion;
-		P[ip].J = 2./5.*P[ip].m* P[ip].R*P[ip].R; 	
-		
+		P[ip].J = 2./5.*P[ip].m* P[ip].R*P[ip].R;
+		 	
+		if(BRANCH=="LIB") P[ip].r_polymer = parameter.VOL_polymer;
+		else P[ip].r_polymer = 0.0;
 		P[ip].Tdot = 0.0;
-		
-		i++;
-		if(i>=nloop) i-=nloop;
 	}
 }
 	
@@ -117,7 +113,7 @@ void Cconfig::create_random()
 		
 		if(P[ip].AM_I_BOUNDARY==0)//flowing particle
 		{
-			P[ip].m = 4./3. * PI * pow(P[ip].R,3)*RHO;
+			P[ip].m = 4./3. * PI * pow(P[ip].R_scale,3)*RHO;
 			P[ip].T = 20;
 		}
 		if(P[ip].AM_I_BOUNDARY==-1 ||P[ip].AM_I_BOUNDARY==-2 )//bottom walls

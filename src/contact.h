@@ -39,7 +39,7 @@ class Ccontact
 	Cvector Fn, Ft,Fvis,Fela;
 		
 	Cvector G,Gn,Gt;
-	double fn,ft,gn,gt;
+	double fn,ft,gn,gt,fvis;
 
 	double deltaN; /** Normal deflection.*/
 	double a; /**< Radius of the interacting region.*/

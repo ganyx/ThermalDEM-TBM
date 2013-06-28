@@ -31,6 +31,7 @@ public:
 	double k;				/**<Thermal conductivity.*/
 	double c;				/**<Heat capacity.*/
 	double e;				/**<Thermal expantion coefficient.*/
+	double r_polymer;		/**<Polymer layer thickness = r_polymer*RS. */
 	
 	double Tm;
 	double Lm;
