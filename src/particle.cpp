@@ -46,7 +46,7 @@ void Cparticle::predictor(double dt,double dt2_on_2)
 		RS = R*R*R - 3.0/4.0 *L /PI/RHO/Lm; 
 		RS = pow(RS, 1.0/3.0);	
 		}
-	else if(!MELTING) RS=R;
+	else if(!MELTING && BRANCH!="LIB") RS=R;
 	
 	X += (V*dt)+ (A*dt2_on_2);
 	V += (A*dt);
