@@ -1,6 +1,6 @@
--- including gap conduction
+-- [DONE] including gap conduction
 -- determine the dimension used
 -- elastic wall at cooling plates
 -- corresponding mechanical and thermal boundary conditions
--- prepacking
+-- [DONE] prepacking
 -- parametrical study

@@ -58,6 +58,7 @@ bool LIQUID_TRANSFER;
 #define MELTING false
 bool Voronoi_Update;
 string BRANCH;
+string BOUNDARY;
 
 #define PSEUDO_2D 0 /**< 1= yes 0 = no (then 3D)*/	     
 	     

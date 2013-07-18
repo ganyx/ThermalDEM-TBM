@@ -381,6 +381,7 @@ if(Voronoi_Update){
 			}
 			if(P[ip].v_neighbors[in] < 0){
 				// the grain is close to the wall region
+                // wall ID -1 to -6 corresponding to xmin, xmax, ymin, ymax, zmin, zmax
 			} 
 			}}
 			

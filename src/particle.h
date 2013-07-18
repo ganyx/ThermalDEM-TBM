@@ -9,7 +9,7 @@ class Cnode;
 class Cparticle
 {
 public:
-	int id;
+    int id;
 	Cvector X;             /**< Particle position. */ 
 	Cvector V;             /**< Particle velocity.*/ 
 	Cvector A;             /**< Particle acceleration. */ 

@@ -335,7 +335,8 @@ double  Ccontact::conductance() // for calculation of dimensionless conductance 
 		double Hmax = 2.0*BETAmax/PI - 2.0 *log(BETAmax);
 		HeHm = Hmin + (Hmax - Hmin) *(BETA - BETAmin)/(BETAmax - BETAmin);
 	} 
-	HTotal = H0 + HeHm;	
+	HTotal = H0 + HeHm;
+    return HTotal;
 }
 
 
