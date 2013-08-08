@@ -377,6 +377,7 @@
 				DAF99ACB1794EF6E00524F08 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

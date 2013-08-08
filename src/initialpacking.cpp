@@ -40,6 +40,7 @@ void Crun::init_packing()
 	
 	config.Voronoi_Update = true;	
 	config.update_particle();
+    config.update_wall();
 	config.iterate(0.0);
 	
 	int vflag=0;

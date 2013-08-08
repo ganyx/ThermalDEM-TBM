@@ -23,7 +23,10 @@ void Crun::init_evolve(void)
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
 	
 	//Cell boundary input  
-	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+//	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+ 
+    // Converting to Keywords system
+    config.cell.boundary = BOUNDARY;
 	
 	//what to simulate
 	get_secure("Do you want to simule the thermal conduction", "CONDUCTION",	config.simule_thermal_conduction);
@@ -150,6 +153,7 @@ void Crun::init_evolve(void)
 	
 	config.Voronoi_Update = true;	
 	config.update_particle();
+    config.update_wall();
 	config.iterate(0.0);
 
 	cout<<"Initialisation of the parameter:\t SUCCESS"<<endl;  

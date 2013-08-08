@@ -23,10 +23,9 @@ class Cconfig
 	Ccell cell;					/**< Bondary condition. */
 	std::vector <Ccontact>  C;		/**< List of contact.*/
 	std::vector <Ccontact>  CThread[NTHREADS]; /**< Temperaty contact lists for threads for MPI, YG */
-	std::vector <Cparticle> P;		/**< List of particle.*/
-//	QList <Caggregate> G;		/**< List of aggregate, YG.*/
-//	int Number_P_in_G;
-	
+	std::vector <Cparticle> P;		/**< List of particles.*/
+    std::vector <Cparticle> Wall;   /**< List of walls. */
+    
 	bool simule_thermal_expansion;	/**< if true, the thermal expansion of particle will simulate.*/
 	bool simule_thermal_production;	/**< if true, the motion of particle will simulate.*/
 	bool simule_thermal_conduction;	/**< if true, the heat transfer through contact will simulate.*/
@@ -35,7 +34,7 @@ class Cconfig
   
 	void iterate(double);			/**< Make the configuration evolve over a time step dt. */
 	void update_particle();
-
+    void update_wall();
 
 	void create_random();		/**< Create a new random config. */
 	void set_wall_grain(int, int);/**< Set the grain of the walls as well as the planes if any. */

@@ -18,7 +18,7 @@ cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
     cout<<"\tCREATE: prepare initial packing."<<endl;
     cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
     cout<<"\tCAPDEM: DEM for capillary interaction"<<endl;
-    cout<<"\tThermal-DEM:"<<endl;
+    cout<<"\tTBM: DEM code for fusion blanket TBM systems"<<endl;
     cout<<"\tNORMAL: Standard input"<<endl;
     cin>> BRANCH;
     
@@ -31,7 +31,7 @@ cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
     cout<<"\tWALL_BOX_XYZ: controllable wall conditions at all directions."<<endl;
     cout<<"\tCYLINDER: wall conditon with cyliderical container."<<endl;
     cout<<"\tPERIODIC_CYLINDER: periodic condition along cylinderical height."<<endl;
-    //        cin>> BOUNDARY;
+    cin>> BOUNDARY;
 
 //if(action!="CREATE" && action!="EVOLVE")
 //	{serror="The action '"+action+"' does not exit. Choices are  'CREATE' / 'EVOLVE'";

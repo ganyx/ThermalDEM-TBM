@@ -66,6 +66,7 @@ void Cconfig::iterate(double time_step)
 if(LIQUID_TRANSFER){
 	for(int ic=0;ic<C.size();ic++) if(C[ic].fcap >0) {
 		P[C[ic].A].water_pressure -= C[ic].fcap * C[ic].dx * P[C[ic].A].R /(P[C[ic].A].R+P[C[ic].B].R);
+        if(C[ic].B >=0)
 		P[C[ic].B].water_pressure -= C[ic].fcap * C[ic].dx * P[C[ic].B].R /(P[C[ic].A].R+P[C[ic].B].R);
 	}
 	for(int ip=0; ip< P.size(); ip++) {
@@ -181,18 +182,21 @@ void  Cconfig::sum_heat()
 	for(int ic=0;ic<C.size();ic++) //sum over each interaction
 	{
 		P[C[ic].A].phi+= C[ic].phi ;
+        if(C[ic].B >=0)
 		P[C[ic].B].phi-= C[ic].phi ;
 		
 		if(C[ic].Flag_Boundary){
 			double dPhi = -2.*C[ic].conductivity*C[ic].a *(parameter.average_temperature-20.0)*fabs(C[ic].dX.x[1])/cell.L.x[1]; //exp
 			P[C[ic].A].phi += dPhi;
+            if(C[ic].B >=0)
 			P[C[ic].B].phi += dPhi;
 			heat_out += 2.0*dPhi;
 		}
 
 		if(simule_thermal_production)
 		{
-			P[C[ic].A].production+= C[ic].production/2.; 
+			P[C[ic].A].production+= C[ic].production/2.;
+            if(C[ic].B >=0)
 			P[C[ic].B].production+= C[ic].production/2.; 		
 		}
 	}
@@ -227,11 +231,11 @@ void Cconfig::sum_force()
 	{
 		Cvector dx;
 		P[C[ic].A].Fsum += C[ic].F;
-		P[C[ic].B].Fsum -= C[ic].F;
+        if(C[ic].B >=0)	P[C[ic].B].Fsum -= C[ic].F;
 		P[C[ic].A].Gsum +=  (C[ic].RA^C[ic].F) +C[ic].G;
-		P[C[ic].B].Gsum -=  (C[ic].RB^C[ic].F) +C[ic].G;
+		if(C[ic].B >=0) P[C[ic].B].Gsum -=  (C[ic].RB^C[ic].F) +C[ic].G;
 
-if(LIQUID_TRANSFER){
+        if(LIQUID_TRANSFER && C[ic].B >=0){
 // Additional force due to positive water pressure, CHECK !!
 		Cvector FWATER_A = C[ic].nA * (P[C[ic].B].positive_pressure)*C[ic].voronoi_area;
 		Cvector FWATER_B = C[ic].nA * (P[C[ic].A].positive_pressure)*C[ic].voronoi_area;
@@ -309,11 +313,36 @@ if(Voronoi_Update){
 	if(nx < 1) nx=1;
 	if(ny < 1) ny=1;
 	if(nz < 1) nz=1;
-
+    
+    container_poly con();
+    
+    if(cell.boundary == "WALL_BOX_Y"){
 	container_poly  con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
 	-cell.L.x[1]/2.0,cell.L.x[1]/2.0,
 	-cell.L.x[2]/2.0,cell.L.x[2]/2.0,
-	nx,ny,nz,true,true,true,8);
+	nx,ny,nz,true,false,true,8);
+    
+    for( int ip=0;ip<P.size();ip++){
+		con.put(ip,P[ip].X.x[0],P[ip].X.x[1],P[ip].X.x[2],P[ip].R);
+    }
+    
+	for(int ijk=0; ijk < nx*ny*nz; ijk++){
+		for(int q=0;q<con.co[ijk];q++){
+			con.compute_cell(vcell,ijk,q);
+			int ivp=con.id[ijk][q];
+			vcell.neighbors(P[ivp].v_neighbors);
+			vcell.face_areas(P[ivp].v_face_areas);
+			P[ivp].num_neighbors = P[ivp].v_neighbors.size();
+			P[ivp].voronoi_volume = vcell.volume();
+		}}
+    }
+
+    
+    if(cell.boundary == "PERIODIC_SHEAR"){
+    container_poly  con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
+    -cell.L.x[1]/2.0,cell.L.x[1]/2.0,
+    -cell.L.x[2]/2.0,cell.L.x[2]/2.0,
+    nx,ny,nz,true,true,true,8);
 	
 	for( int ip=0;ip<P.size();ip++){
 		con.put(ip,P[ip].X.x[0],P[ip].X.x[1],P[ip].X.x[2],P[ip].R);
@@ -329,8 +358,9 @@ if(Voronoi_Update){
 			P[ivp].voronoi_volume = vcell.volume();
 		}}
 	}
+}
 	
-#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI	
+#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
 	for( int ip=0;ip<P.size();ip++){
 		P[ip].grain_volume = 4.0/3.0 * PI * pow(P[ip].R,3.0);
 		P[ip].void_volume = P[ip].voronoi_volume - P[ip].grain_volume;
@@ -349,41 +379,69 @@ if(Voronoi_Update){
 // YG, Be careful for the following section		
 	for(int it=0; it<NTHREADS; it++){ CThread[it].clear();} // done below
 		
-	int in, ip, c, tid; 
+	int in, ip, c, tid;
 	bool exist_contact;
 	Ccontact cont;
 
-//#pragma omp parallel for private(in, c, exist_contact,cont, tid) schedule(dynamic) num_threads(NTHREADS)	// YG, MPI testing
+//#pragma omp parallel for private(in, c, exist_contact,cont, tid, pid) schedule(dynamic) num_threads(NTHREADS)	// YG, MPI testing
 	for(ip=0;ip<P.size();ip++)	// Problem with this loop!! Inverse the loop, different results!!
 		{
 		for(in=0; in<P[ip].num_neighbors;in++)
 			{
-			if(P[ip].id > P[ip].v_neighbors[in] && P[ip].v_neighbors[in] >=0)
+   			if(P[ip].id > P[ip].v_neighbors[in])
 				{
-				exist_contact=false;
-				for(c=0; c<P[ip].contact.size();c++)
-					if(P[ip].contact[c]->pB == &P[P[ip].v_neighbors[in]] || P[ip].contact[c]->pA == &P[P[ip].v_neighbors[in]] )
-						{	exist_contact= true; 
-							
-							P[ip].contact[c]->voronoi_area = P[ip].v_face_areas[in]; // update the voronoi_area, even for existing contacts.
-							
-							break; }//check if the contact exists
+                    exist_contact=false;
+                    
+                    for(c=0; c<P[ip].contact.size();c++)
+                    {
+                        if(P[ip].v_neighbors[in] >= 0){
+                            if(P[ip].contact[c]->pB == &P[P[ip].v_neighbors[in]]
+                               || P[ip].contact[c]->pA == &P[P[ip].v_neighbors[in]] )
+                            {
+                                exist_contact= true;
+                                P[ip].contact[c]->voronoi_area = P[ip].v_face_areas[in];
+                                    // update the voronoi_area, even for existing contacts.
+                               break;
+                            }//check if the contact exists
+                        }
+                    
+                        if(P[ip].v_neighbors[in] < 0){
+                            if(P[ip].contact[c]->pB == &Wall[-P[ip].v_neighbors[in]]
+                               || P[ip].contact[c]->pA == &Wall[-P[ip].v_neighbors[in]] )
+                            {
+                                exist_contact= true;
+                                P[ip].contact[c]->voronoi_area = P[ip].v_face_areas[in];
+                                    // update the voronoi_area, even for existing contacts.
+                                break;
+                            }//check if the contact exists
+                        }}
+
 				if(!exist_contact)//if not, create a new contact
-				{ 	
+				{
 					tid = omp_get_thread_num();
-					Ccontact cont(&P[ip], &P[P[ip].v_neighbors[in]], &cell, &parameter);	
+                    
+                    if(P[ip].v_neighbors[in] < 0)
+                    { // contact between particles and walls
+                        if(cell.boundary == "WALL_BOX_Y" && (P[ip].v_neighbors[in] == -3 || P[ip].v_neighbors[in] == -4)){
+                            // the grain is close to the wall region
+                            // wall ID -1 to -6 corresponding to xmin, xmax, ymin, ymax, zmin, zmax
+                            Ccontact cont(&P[ip], &Wall[-P[ip].v_neighbors[in]], &cell, &parameter);
+                            if( cont.AM_I_CONTACTING() ) {
+                                cont.voronoi_area = P[ip].v_face_areas[in];
+                                CThread[tid].push_back(cont);
+                            }}
+                    }
+                    
+                    if(P[ip].v_neighbors[in] >= 0){
+                        Ccontact cont(&P[ip], &P[P[ip].v_neighbors[in]], &cell, &parameter);
 					if( cont.AM_I_CONTACTING() ) //don't do it if particles are not contacting 	
 					{
 						cont.voronoi_area = P[ip].v_face_areas[in];	
-						CThread[tid].push_back(cont); 
-					}											
+						CThread[tid].push_back(cont);
+					}}
 				}
-			}
-			if(P[ip].v_neighbors[in] < 0){
-				// the grain is close to the wall region
-                // wall ID -1 to -6 corresponding to xmin, xmax, ymin, ymax, zmin, zmax
-			} 
-			}}
+                }
+    }}
 			
 	for(int it=0; it<NTHREADS; it++){
 		std::vector <Ccontact> Ctemp = C;
@@ -406,9 +464,9 @@ if(Voronoi_Update){
 			}
 
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI   
-	for(int ic=0; ic < C.size(); ic++)  C[ic].age+=dt;//get contact older
+	for(int ic=0; ic < C.size(); ic++)  C[ic].age+=dt; //get contact older
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI		
-	for(int ip=0;ip<P.size();ip++) P[ip].contact.clear();//rebuilt the pointer list
+	for(int ip=0;ip<P.size();ip++) P[ip].contact.clear(); //rebuilt the pointer list
 // YG, no MPI here
     for(int ic=0; ic < C.size(); ic++) {
     	C[ic].pA->contact.push_back(&C[ic]);
@@ -420,38 +478,7 @@ if(Voronoi_Update){
 
 
  void Cconfig::energy(void)
-{ 
- // double Etot,Eela,Eforce,Emoment, Ekin,Erot,Etrans;
-   Etot=0;
-   Eela=0;Eforce=0;Emoment=0;
-   Ekin=0;Erot=0; Etrans=0;
-   
- /* foreach(Ccontact cont, C)
-  {
-//    Eforce += 2./5. *cont.fn*cont.deltaN + 0.5 * cont.ft*cont.ft/(cont.a*parameter.MODULE_T);
-    
-   cont.gt=cont.Gt.NORM(); 
-   cont.gn=con.Gn.NORM();
-
-  //  Emoment+= 0.5/(cont.a*cont.a*cont.a)*(cont.gn*cont.gn/parameter.MODULE_N +  cont.gt*cont.gt/parameter.MODULE_T);
-  }
-   Eela=Eforce+Emoment;
-  
-  foreach(Cparticle p, P)
-  {
-    Cvector V;
-    V = p.V;
-    V.x[0]-=cell.shear_rate*p.X.x[1];
-    Etrans+=0.5*p.m*(V*V);
-    Erot +=0.5* 2./5.*p.m* p.R*p.R*(p.Ome*p.Ome);
- 
-  }
-  */
-  Ekin=Erot+Etrans;
-  Etot = Ekin+Eela;
-}
-
-
+{ }
 
 void Cconfig::fread(Cin_out where_to_read)
 {
@@ -504,7 +531,8 @@ void Cconfig::fread(Cin_out where_to_read)
 	for(int ic=0;ic<C.size();ic++)
 		{ 
 			C[ic].pA = &P[C[ic].A]; 
-			C[ic].pB = &P[C[ic].B];
+			if(C[ic].B >=0) C[ic].pB = &P[C[ic].B];
+            else C[ic].pB = &Wall[-C[ic].B]; // CHECK!
 			C[ic].cell = &cell;
 			C[ic].parameter = &parameter;
 			P[C[ic].A].contact.push_back(&C[ic]);
@@ -607,7 +635,7 @@ void  Cconfig::liquid_transfer(){
 	}
 	
 	for(int ic=0;ic<C.size();ic++){
-		if(C[ic].water_volume > 0.0) // if liquid bridge is existing
+		if(C[ic].water_volume > 0.0 && C[ic].B>=0) // if liquid bridge is existing
 		{
 			double dwater_volume = 0.0;				
 			// define mass transfer of liquid phase, depdending on pressure gradient

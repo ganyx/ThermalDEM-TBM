@@ -24,6 +24,7 @@ using namespace std; // for a easier use of cin and cout
 
 #define DIM 3  	/**< Space dimension. */ 
 #define PI 3.1415926535 
+#define INFINITE 1.e20
 #define R_SCALE_FACTOR 2.0		/**< scaling factor for initial packing, only for CREATE stage */
 #define MESH_SIZE 2.0  	/**< ratio of mesh size and the maximum particle diameter */
 #define INIT_BOND 0
