@@ -80,6 +80,7 @@ void Cconfig::create_random()
     
     cell.boundary = BOUNDARY;
     cout<<BOUNDARY<<endl;
+    
 	Npart_wall_bottom=0;
 	Npart_wall_top=0;
     

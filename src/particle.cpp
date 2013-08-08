@@ -263,8 +263,10 @@ void Cparticle::get_neighbour(Ccell &cell)
 		for(int B = 0; B< my_box[b]->contact_box[cb]->part.size();B++)	//for each particle of the contacting box
 		{
 		Cparticle *pB= my_box[b]->contact_box[cb]->part[B]; 
-		if(AM_I_BOUNDARY==0 || pB->AM_I_BOUNDARY==0 || (AM_I_BOUNDARY!=pB->AM_I_BOUNDARY)) //don't care of two stuck particle of the same plan
-		if(id>pB->id) neighbour.push_back(pB);					//Search within the same box: don't count twice the contact by accepting neigbours only with A.id>B.id
+		if(AM_I_BOUNDARY==0 || pB->AM_I_BOUNDARY==0 || (AM_I_BOUNDARY!=pB->AM_I_BOUNDARY))
+            //don't care of two stuck particle of the same plan
+		if(id>pB->id) neighbour.push_back(pB);
+            //Search within the same box: don't count twice the contact by accepting neigbours only with A.id>B.id
 		}
 		
 	if(cell.boundary=="PERIODIC_SHEAR") return;
@@ -276,24 +278,29 @@ void Cparticle::get_neighbour(Ccell &cell)
 
 ofstream & operator<<(ofstream &file,Cparticle p)
 {
-	if(BRANCH=="LIB"){
-	file<<p.X<<p.V<<p.Ome; //vector
-	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
-	file<<endl;	//new line
+    file<<p.X<<p.V<<p.Ome; //vector
+    file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.AM_I_BOUNDARY<<"\t"; //scalar
+    
+    if(BRANCH=="LIB")
+        file<<p.saturation<<"\t"<<p.water_volume; //scalar
+    else
+        file<<p.saturation<<"\t"<<p.water_volume; //scalar
+
+    file<<endl;	//new line
  	return file;
-	}
-	else{
-	file<<p.X<<p.V<<p.Ome; //vector
-	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
-	file<<endl;	//new line
- 	return file;
-	}
 }
 
 ifstream & operator>>(ifstream &file,Cparticle &p)
 {
 	file>>p.X>>p.V>>p.Ome; 	//vector
-	file>>p.R>>p.m>>p.water_pressure>>p.saturation>>p.water_volume;	//scalar
+	file>>p.R>>p.m>>p.RS>>p.AM_I_BOUNDARY; //scalar
+    
+
+       if(BRANCH=="LIB")
+          file>>p.saturation>>p.water_volume;	//scalar
+       else
+          file>>p.saturation>>p.water_volume;	//scalar
+    
  	return file;
 }
 

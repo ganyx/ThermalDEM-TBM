@@ -95,6 +95,20 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		file.close();
 		}
 	}
+    
+
+    int ipflow = config.P.size();
+    
+    // BALL_WALL_Y boundary conditions
+    if(config.cell.boundary == "BALL_BOX_Y")
+    for(int ip=0; ip<config.P.size();ip++){
+        if(config.P[ip].X.x[1] >= config.cell.L.x[1]/2.0 - config.parameter.Dmax/2.0)
+            config.P[ip].AM_I_BOUNDARY = 2;
+        if(config.P[ip].X.x[1] <= -config.cell.L.x[1]/2.0 + config.parameter.Dmax/2.0)
+            config.P[ip].AM_I_BOUNDARY = -2;
+        if(config.P[ip].AM_I_BOUNDARY != 0) ipflow--;
+    }
+    cout<<"The number of flowing particles is: "<<ipflow <<" out of total "<<config.P.size()<<" particles."<<endl;
 
 	cout<<"Initial packing process finished: SUCCESS"<<endl<<endl;	
 	return;

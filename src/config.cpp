@@ -44,10 +44,14 @@ void Cconfig::iterate(double time_step)
 	cell.rigid_velocity *= 0.0;
 	corrector();			//acceleration of particles according to the sum of force/moment they experience
 	cell.rigid_velocity /= parameter.total_mass;
+    
 // Velocity offset by rigid motion
 //#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
-	for(int ip=0; ip< P.size(); ip++) 
-		P[ip].V -= cell.rigid_velocity;
+    if(cell.boundary == "PERIODIC_SHEAR" ||
+       cell.boundary == "PERIODOC_BOX" ||
+       cell.boundary == "PERIODOC_BOX_XYZ")
+        {for(int ip=0; ip< P.size(); ip++)
+            P[ip].V -= cell.rigid_velocity;}
 
 	if(dt==0) {
 		for(int ip=0; ip< P.size(); ip++) {
@@ -338,7 +342,12 @@ if(Voronoi_Update){
     }
 
     
-    if(cell.boundary == "PERIODIC_SHEAR"){
+    if(cell.boundary == "PERIODIC_SHEAR" ||
+       cell.boundary == "PERIODOC_BOX" ||
+       cell.boundary == "PERIODOC_BOX_XYZ" ||
+       cell.boundary == "BALL_BOX" ||
+       cell.boundary == "BALL_BOX_Y")
+    {
     container_poly  con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
     -cell.L.x[1]/2.0,cell.L.x[1]/2.0,
     -cell.L.x[2]/2.0,cell.L.x[2]/2.0,
@@ -394,7 +403,9 @@ if(Voronoi_Update){
                     
                     for(c=0; c<P[ip].contact.size();c++)
                     {
-                        if(P[ip].v_neighbors[in] >= 0){
+                        if(P[ip].v_neighbors[in] >= 0
+                           && (P[ip].AM_I_BOUNDARY==0 || P[P[ip].v_neighbors[in]].AM_I_BOUNDARY==0 ) // Only particles inside the compute domain
+                        ){
                             if(P[ip].contact[c]->pB == &P[P[ip].v_neighbors[in]]
                                || P[ip].contact[c]->pA == &P[P[ip].v_neighbors[in]] )
                             {
