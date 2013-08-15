@@ -66,7 +66,7 @@ class Cconfig
 	bool flag_wetting;
 	double MAX_SCAN;
 	double MIN_SCAN;
-	double GRAVITY;
+//	double GRAVITY;
 };
 
 

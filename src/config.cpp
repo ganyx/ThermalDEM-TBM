@@ -53,10 +53,10 @@ void Cconfig::iterate(double time_step)
         {for(int ip=0; ip< P.size(); ip++)
             P[ip].V -= cell.rigid_velocity;}
 
-	if(dt==0) {
-		for(int ip=0; ip< P.size(); ip++) {
-			P[ip].V *= 0.0; P[ip].Ome *= 0.0;
-		}}
+//	if(dt==0) {
+//		for(int ip=0; ip< P.size(); ip++) {
+//			P[ip].V *= 0.0; P[ip].Ome *= 0.0;
+//		}}
 			
 	for(int ip=0; ip< P.size(); ip++) {
 		P[ip].V *= (1.0 - GLOBAL_DAMPING*dt); // Global damping
@@ -214,12 +214,7 @@ void Cconfig::sum_force()
 {
  	Cmatrix stress;
 
-	Cvector g;//vector gravity
-	if(cell.boundary=="WALL_INCLINED"){
-	g.x[0]=  cell.gravity*sin(PI/180 * cell.slope );
-	g.x[1]= -cell.gravity*cos(PI/180 * cell.slope );
-	g.x[2]=0;
-	}//	else g is null
+	Cvector g = cell.g;
 	
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
 	for(int ip=0; ip< P.size();ip++) 
@@ -270,18 +265,41 @@ if(LIQUID_TRANSFER){
 	
 	//cell.stress = stress.symetric();  
 	cell.stress =stress;
+    cell.normal_stress_in = stress.x[1][1];
+	cell.shear_stress_in = stress.x[1][1];
 	
-	
-	if(cell.boundary!="WALL_INCLINED") return;
-	cell.normal_stress_in=0;
-	cell.shear_stress_in=0;
+	if(cell.boundary!="WALL_INCLINED" && cell.boundary != "BALL_BOX_Y") return;
+    
+    cell.normal_stress_bottom = 0.0;
+	cell.shear_stress_bottom = 0.0;
+    cell.normal_stress_top = 0.0;
+	cell.shear_stress_top = 0.0;
+    
 	for(int ic=0;ic<C.size();ic++)
 		{
-			if(P[C[ic].A].AM_I_BOUNDARY==-1||P[C[ic].A].AM_I_BOUNDARY==-2){ cell.normal_stress_in+=C[ic].F.x[1]; cell.shear_stress_in+=C[ic].F.x[0];}
-			if(P[C[ic].B].AM_I_BOUNDARY==-1||P[C[ic].B].AM_I_BOUNDARY==-2){ cell.normal_stress_in-=C[ic].F.x[1]; cell.shear_stress_in-=C[ic].F.x[0];}
+            if(C[ic].B >= 0){
+            // grain-grain contact at the bottom
+			if(P[C[ic].A].AM_I_BOUNDARY==-1||P[C[ic].A].AM_I_BOUNDARY==-2){ cell.normal_stress_bottom+=C[ic].F.x[1]; cell.shear_stress_bottom+=C[ic].F.x[0];}
+			if(P[C[ic].B].AM_I_BOUNDARY==-1||P[C[ic].B].AM_I_BOUNDARY==-2){ cell.normal_stress_bottom-=C[ic].F.x[1]; cell.shear_stress_bottom-=C[ic].F.x[0];}
+                
+            // grain-grain contact at the top
+            if(P[C[ic].A].AM_I_BOUNDARY==1||P[C[ic].A].AM_I_BOUNDARY==2){ cell.normal_stress_top+=C[ic].F.x[1]; cell.shear_stress_top+=C[ic].F.x[0];}
+            if(P[C[ic].B].AM_I_BOUNDARY==1||P[C[ic].B].AM_I_BOUNDARY==2){ cell.normal_stress_top-=C[ic].F.x[1]; cell.shear_stress_top-=C[ic].F.x[0];}
+            }
+        
+        if(C[ic].B == -3) // grain-wall contact at the bottom
+            {cell.normal_stress_bottom-=C[ic].F.x[1]; cell.shear_stress_bottom-=C[ic].F.x[0];}
+            
+        if(C[ic].B == -4) // grain-wall contact at the top
+            {cell.normal_stress_top-=C[ic].F.x[1]; cell.shear_stress_top-=C[ic].F.x[0];}
 		}
-	cell.normal_stress_in/=(cell.L.x[0]*	cell.L.x[2]);cell.shear_stress_in/=(cell.L.x[0]*	cell.L.x[2]);
-	cell.normal_stress_in*=-1;//get it positive in compression
+	cell.normal_stress_bottom/=(cell.L.x[0]*	cell.L.x[2]);
+    cell.shear_stress_bottom/=(cell.L.x[0]*	cell.L.x[2]);
+	cell.normal_stress_bottom*=-1; //bottom: normal stress direction, get it positive in compression
+    
+    cell.normal_stress_top/=(cell.L.x[0]*	cell.L.x[2]);
+    cell.shear_stress_top/=(cell.L.x[0]*	cell.L.x[2]);
+	cell.shear_stress_top*=-1; // top: shear stress direction
 }
 
 void Cconfig::update_contact()
@@ -320,7 +338,10 @@ if(Voronoi_Update){
     
     container_poly con();
     
-    if(cell.boundary == "WALL_BOX_Y"){
+    if(cell.boundary == "WALL_BOX_Y"
+       || (cell.boundary == "BALL_BOX_Y" && BRANCH != "CREATE")
+       )
+    {
 	container_poly  con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
 	-cell.L.x[1]/2.0,cell.L.x[1]/2.0,
 	-cell.L.x[2]/2.0,cell.L.x[2]/2.0,
@@ -346,7 +367,8 @@ if(Voronoi_Update){
        cell.boundary == "PERIODOC_BOX" ||
        cell.boundary == "PERIODOC_BOX_XYZ" ||
        cell.boundary == "BALL_BOX" ||
-       cell.boundary == "BALL_BOX_Y")
+       (cell.boundary == "BALL_BOX_Y" && BRANCH == "CREATE")
+       )
     {
     container_poly  con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
     -cell.L.x[1]/2.0,cell.L.x[1]/2.0,
@@ -395,17 +417,16 @@ if(Voronoi_Update){
 //#pragma omp parallel for private(in, c, exist_contact,cont, tid, pid) schedule(dynamic) num_threads(NTHREADS)	// YG, MPI testing
 	for(ip=0;ip<P.size();ip++)	// Problem with this loop!! Inverse the loop, different results!!
 		{
+        if(P[ip].AM_I_BOUNDARY==0) // Only grain inside the compute domain
 		for(in=0; in<P[ip].num_neighbors;in++)
 			{
    			if(P[ip].id > P[ip].v_neighbors[in])
 				{
                     exist_contact=false;
-                    
                     for(c=0; c<P[ip].contact.size();c++)
                     {
-                        if(P[ip].v_neighbors[in] >= 0
-                           && (P[ip].AM_I_BOUNDARY==0 || P[P[ip].v_neighbors[in]].AM_I_BOUNDARY==0 ) // Only particles inside the compute domain
-                        ){
+                        if(P[ip].v_neighbors[in] >= 0) 
+                        {
                             if(P[ip].contact[c]->pB == &P[P[ip].v_neighbors[in]]
                                || P[ip].contact[c]->pA == &P[P[ip].v_neighbors[in]] )
                             {
@@ -433,7 +454,9 @@ if(Voronoi_Update){
                     
                     if(P[ip].v_neighbors[in] < 0)
                     { // contact between particles and walls
-                        if(cell.boundary == "WALL_BOX_Y" && (P[ip].v_neighbors[in] == -3 || P[ip].v_neighbors[in] == -4)){
+                        if((cell.boundary == "WALL_BOX_Y"
+                            || cell.boundary == "BALL_BOX_Y")
+                            && (P[ip].v_neighbors[in] == -3 || P[ip].v_neighbors[in] == -4)){
                             // the grain is close to the wall region
                             // wall ID -1 to -6 corresponding to xmin, xmax, ymin, ymax, zmin, zmax
                             Ccontact cont(&P[ip], &Wall[-P[ip].v_neighbors[in]], &cell, &parameter);
@@ -464,7 +487,8 @@ if(Voronoi_Update){
 
 // YG, no MPI here	
 	for(int ic=0; ic < C.size(); ic++) //delete contact within the list
-		if (!C[ic].AM_I_CONTACTING()) 
+		if (!C[ic].AM_I_CONTACTING()
+            || (C[ic].pA->AM_I_BOUNDARY !=0 && C[ic].pB->AM_I_BOUNDARY !=0) )
 			{ 
 				if(ic< C.size()-1 ) 
 				{
@@ -539,11 +563,14 @@ void Cconfig::fread(Cin_out where_to_read)
 		P[ip].id=ip;
 	}
 
+    
+    update_wall(); // update wall class
+    
 	for(int ic=0;ic<C.size();ic++)
 		{ 
 			C[ic].pA = &P[C[ic].A]; 
 			if(C[ic].B >=0) C[ic].pB = &P[C[ic].B];
-            else C[ic].pB = &Wall[-C[ic].B]; // CHECK!
+            else C[ic].pB = &Wall[-C[ic].B]; 
 			C[ic].cell = &cell;
 			C[ic].parameter = &parameter;
 			P[C[ic].A].contact.push_back(&C[ic]);
@@ -657,8 +684,10 @@ void  Cconfig::liquid_transfer(){
 //			double Gravity = 2.0e-3;
 			if(fabs(C[ic].pA->X.x[1] - C[ic].pB->X.x[1])<10.0){
 				flag_boundary = false;
-				pa_ave = C[ic].pA->water_pressure + GRAVITY * C[ic].pA->X.x[1];
-				pb_ave = C[ic].pB->water_pressure + GRAVITY * C[ic].pB->X.x[1];
+//				pa_ave = C[ic].pA->water_pressure + GRAVITY * C[ic].pA->X.x[1];
+//				pb_ave = C[ic].pB->water_pressure + GRAVITY * C[ic].pB->X.x[1];
+                pa_ave = C[ic].pA->water_pressure - cell.g * C[ic].pA->X;
+				pb_ave = C[ic].pB->water_pressure - cell.g * C[ic].pB->X;
 			}
 			else{ // no water tranport cross X.x[1] boundary
 				flag_boundary = true;

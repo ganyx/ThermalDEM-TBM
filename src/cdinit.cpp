@@ -32,9 +32,12 @@ void  Cconfig::update_particle()
 void Cconfig::update_wall()
 {
     Cparticle wtemp;
+    Wall.clear();
     
-    if(cell.boundary=="WALL_BOX_Y"){
-
+    if(cell.boundary=="WALL_BOX_Y"
+       || cell.boundary=="BALL_BOX_Y"
+)
+    {
         wtemp.R = INFINITE;
         wtemp.RS = INFINITE; // solid core for contact force
         wtemp.E = parameter.MODULE_N;
@@ -291,7 +294,7 @@ void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
         
         Cvector offset;
         offset *= 0.0;
-        if(cell.boundary == "Wall_BOX_Y") offset.x[1]= parameter.Dmax/2.0/R_SCALE_FACTOR;
+        if(cell.boundary == "WALL_BOX_Y") offset.x[1]= parameter.Dmax/2.0/R_SCALE_FACTOR;
 
 		do
 			{

@@ -105,21 +105,23 @@ void Cparticle::corrector(double dt_on_2,Ccell &cell)
 {
 	if(AM_I_BOUNDARY==-1 || AM_I_BOUNDARY==-2 )
 		{
-		Ome*=0;
-		A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat; 
-		V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat; 
-		X.x[1]= -cell.L.x[1]/2;
+            Ome*=0;
+            A*=0; V*=0;
+		A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat;
+		V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat;
+//		X.x[1]= -cell.L.x[1]/2;
 		return;	
 		}
 	if(AM_I_BOUNDARY==+1 || AM_I_BOUNDARY==+2)
 		{
-		Ome*=0;	
-		A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat; 
-		V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat; 
-		X.x[1]= cell.L.x[1]/2;
+		Ome*=0;
+            A*=0; V*=0;
+		A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat;
+		V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat;
+//		X.x[1]= cell.L.x[1]/2;
 		return;
 		}
-
+    if(AM_I_BOUNDARY==0){
 //flowing particle
 	Cvector Ap,OmeDotp;
 	Ap=A;
@@ -133,7 +135,8 @@ void Cparticle::corrector(double dt_on_2,Ccell &cell)
 	OmeDot= Gsum/J;
 	Ome += (OmeDot-OmeDotp)*dt_on_2;
 	
-	cell.rigid_velocity += V *m;
+        cell.rigid_velocity += V *m;
+    }
 }
 
 void Cparticle::set_me_in_main_cell(Ccell &cell)
@@ -143,7 +146,8 @@ void Cparticle::set_me_in_main_cell(Ccell &cell)
 	cell.rescale(X.x[0],cell.L.x[0]);//check if out fron the right/left sides
 	cell.rescale(X.x[2],cell.L.x[2]);//check if out fron the front/back sides	
 		
-	if(cell.boundary=="PERIODIC_SHEAR")	//specificity of PERIODIC_SHEAR
+	if(cell.boundary=="PERIODIC_SHEAR"	//specificity of PERIODIC_SHEAR
+       || BRANCH == "CREATE")           // OR create sample stage for all type of Boundary conditions
 	{
 		if (X.x[1]>=cell.L.x[1]/2.)		//out fron the top side
 			{

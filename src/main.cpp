@@ -52,7 +52,7 @@ if(BRANCH=="CREATE")
 	
 	run.config.create_random();	//create
 	run.init_packing();
-	run.config.fprint(run.where_save);//save
+	run.config.fprint(run.where_save);//save the final configuration
 }
 
 
