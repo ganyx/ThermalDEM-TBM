@@ -23,20 +23,31 @@ void Crun::init_evolve(void)
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
 	
 	//Cell boundary input  
-	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+//	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+ 
+    // Converting to Keywords system
+    config.cell.boundary = BOUNDARY;
 	
 	//what to simulate
 	get_secure("Do you want to simule the thermal conduction", "CONDUCTION",	config.simule_thermal_conduction);
 	get_secure("Do you want to simule the thermal production", "PRODUCTION",	config.simule_thermal_production);
 	get_secure("Do you want to simule the thermal expansion", "EXPANSION",		config.simule_thermal_expansion);
-		
+
+    // Initial g vector
+    config.cell.g.x[0]= 0.0;
+    config.cell.g.x[1]= 0.0;
+    config.cell.g.x[2]= 0.0;
+    
+    get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
+    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
+    
+    config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
+    config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
+    config.cell.g.x[2]= 0.0;
 	
 	string choice;
-	if(config.cell.boundary=="WALL_INCLINED")
-	{//input for inclined plane 
-		get_secure("Enter the gravity","GRAVITY",config.cell.gravity);
-		get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
-	
+	if(config.cell.boundary =="WALL_INCLINED") //input for inclined plane
+	{
 		config.cell.normal_stress_control=false;
 		config.cell.normal_stress_ext=0;
 		config.cell.normal_stress_control=false;
@@ -45,8 +56,9 @@ void Crun::init_evolve(void)
 	
 	else
 	{//input for plane shear
-		config.cell.gravity=0;
-		config.cell.slope=0;
+//		config.cell.gravity=0;
+//		config.cell.slope=0;
+        config.cell.Vdilat=0; config.cell.Adilat=0;
 		config.cell.shear_stress_control=0;
 		config.cell.shear_work_control=0;
 		config.cell.stick_slip=0;
@@ -114,7 +126,8 @@ void Crun::init_evolve(void)
 		}
 	if(choice!="NO_LIQUID")
 	{
-	get_secure("Enter the GRAVITY", "GRAVITY", config.GRAVITY);
+//    get_secure("Enter the gravity","GRAVITY",config.cell.gravity);
+//    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
 	get_secure("Enter the MAX_SCAN_SATURATION", "MAX_SCAN", config.MAX_SCAN);
 	get_secure("Enter the MIN_SCAN_SATURATION", "MIN_SCAN", config.MIN_SCAN);
 	get_secure("Enter the SURFACE_TENSION", "SURFACE_TENSION", config.parameter.SURFACE_TENSION);
@@ -150,6 +163,7 @@ void Crun::init_evolve(void)
 	
 	config.Voronoi_Update = true;	
 	config.update_particle();
+//    config.update_wall();
 	config.iterate(0.0);
 
 	cout<<"Initialisation of the parameter:\t SUCCESS"<<endl;  

@@ -17,6 +17,8 @@ class Ccell
 	Cvector rigid_velocity;  
 	double normal_stress_ext,shear_stress_ext;
 	double normal_stress_in, shear_stress_in;
+    double normal_stress_bottom, shear_stress_bottom;
+    double normal_stress_top, shear_stress_top;
 	double shear_rate,dilat_rate;
 	double cumul_strain;
 	
@@ -38,7 +40,8 @@ class Ccell
 	double slip_velocity;
 
 	double gravity;				/**<Guess what...*/
-	double slope;				/**<slope angle on the cell, in degree.*/ 
+	double slope;				/**<slope angle on the cell, in degree.*/
+    Cvector g;
 
 	bool normal_stress_control, shear_stress_control, gradT_control;
 	bool normal_strain_control;

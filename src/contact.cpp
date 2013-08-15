@@ -43,18 +43,27 @@ Ccontact::Ccontact(Cparticle *partA, Cparticle *partB, Ccell *c, Cparameter *par
 
 bool Ccontact::AM_I_CONTACTING()
 {
-	if(pA->AM_I_BOUNDARY==-1 && pB->AM_I_BOUNDARY==-1) return false;//no contact between suck particles of the same plane
+	if(pA->AM_I_BOUNDARY==-1 && pB->AM_I_BOUNDARY==-1) return false;//no contact between particles of the same plane
 	if(pA->AM_I_BOUNDARY==-1 && pB->AM_I_BOUNDARY==-2) return false;
 	if(pA->AM_I_BOUNDARY==-2 && pB->AM_I_BOUNDARY==-1) return false;
 	if(pA->AM_I_BOUNDARY== 1 && pB->AM_I_BOUNDARY== 1) return false;
 	if(pA->AM_I_BOUNDARY== 1 && pB->AM_I_BOUNDARY== 2) return false;
 	if(pA->AM_I_BOUNDARY== 2 && pB->AM_I_BOUNDARY== 1) return false;
 	if(pA == pB) return false;
-	set_me_in_main_cell(); //reset dX and dV according to the periodic boundary conditions	
+    
+    set_me_in_main_cell(); //reset dX and dV according to the periodic boundary conditions
 	dx=dX.NORM();
 	
-	deltaN = dx-pA->R-pB->R;
-	if(water_volume == 0.0) { // initial contact with sufficient water supply and smaller enough gap.
+	if(B >= 0) deltaN = dx - pA->R - pB->R;
+    
+    if(B<0 && pB->R == INFINITE){ // wall contact
+ //       if(pB->R == INFINITE) // flat walls
+        dx = pB->nw*dX *(-1.0);
+        if(dx<0) cout<<'.';
+        deltaN = dx - pA->R;
+    }
+    
+	if(LIQUID_TRANSFER && water_volume == 0.0) { // initial contact with sufficient water supply and smaller enough gap.
 		if(pA->water_volume + pB->water_volume >= 0.1 
 			&& deltaN <= 0.2*min(pA->R, pB->R) && LIQUID_TRANSFER) 
 			return true;
@@ -63,12 +72,14 @@ bool Ccontact::AM_I_CONTACTING()
 		|| (deltaN>=0 && deltaNB <= 0 && water_volume <= 1e-30) // non-existing capillary bridge
 		|| (water_volume>1e-30 && deltaN >= min(pow(water_volume,0.3333),MAX_CAP_LENGTH) ) ) // existing capillary bridge, rupture
 		return false; //there is no contact, and no pre-existing bond, and no capilary force (YG)
+    
 	else return true;
 }
 
 void Ccontact::EVALE_Geo()
 {	
 	nA= dX/dx;
+    if(B<0 && pB->R == INFINITE) nA = pB->nw *(-1.0);
 	RA = nA*pA->R;    
 	RB = nA*(-pB->R); 
 
@@ -335,7 +346,8 @@ double  Ccontact::conductance() // for calculation of dimensionless conductance 
 		double Hmax = 2.0*BETAmax/PI - 2.0 *log(BETAmax);
 		HeHm = Hmin + (Hmax - Hmin) *(BETA - BETAmin)/(BETAmax - BETAmin);
 	} 
-	HTotal = H0 + HeHm;	
+	HTotal = H0 + HeHm;
+    return HTotal;
 }
 
 
@@ -343,7 +355,8 @@ double  Ccontact::conductance() // for calculation of dimensionless conductance 
 void Ccontact::set_me_in_main_cell()
 {
 	Flag_Boundary = 0;
-	dX =	pB->X - pA->X;  
+	dX =	pB->X - pA->X;
+    if(B<0 && pB->R == INFINITE) dX = pB->nw*(pB->nw*dX); // contact between particle and flat wall
 	dV =	pB->V - pA->V;
 	dT =	pB->T - pA->T;
 	
@@ -428,51 +441,4 @@ ifstream & operator>>(ifstream &file,Ccontact &c)
 	file>>c.dot_water_volume;
 	return file;
  }
-
-
-
-/*void Ccontact::operator = (Ccontact para)
-{
-	pA=para.pA;
-	pB=para.pB;
-	A=para.A;
-	B=para.B;
-	dx=para.dx;
-	dX=para.dX;
-	deltaN = para.deltaN;
-
-	fn=para.fn;
-	Ft=para.Ft;
-	Gn=para.Gn;
-	Gt=para.Gt;
-	
-	age = para.age;
-}*/
-/*
-	dX = para.dX;
-	dV = para.dV;
-	RA = para.RA;
-	RB = para.RB;
-	nA = para.nA;
-	a = para.a;
-	deltaN=para.deltaN;
-
-	dT=para.dT;
-	production= para.production;
-	production_normal=para.production_normal;
-	production_slide=para.production_slide;
-	production_rolling=para.production_rolling;
-	production_twist=para.production_twist;
-
-	fn=para.fn;
-	ft=para.ft;
-	Fn=para.Fn;
-	Ft=para.Ft;
-	Gn=para.Gn;
-	Gt=para.Gt;
-	G = para.G;
-  
-  Fvis=para.Fvis;
-  F = para.F;*/
-//}
 
