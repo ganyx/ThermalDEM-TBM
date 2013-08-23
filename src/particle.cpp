@@ -87,7 +87,7 @@ if(MELTING){
 		dRS = RS - RS_old;
 	}
 	}
-//if(!MELTING){T += Tdot*dt;
+if(!MELTING) T += Tdot*dt;
 	// Cap mod
 	//RS=R;
 	//dRS=0.0;

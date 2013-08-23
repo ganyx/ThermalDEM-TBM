@@ -178,8 +178,9 @@ void  Cconfig::sum_heat()
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
 	for(int ip=0; ip< P.size();ip++)
 	{ 
-		P[ip].phi_ext=0;
-		P[ip].production=0;
+//		P[ip].phi_ext=0;
+        P[ip].phi_ext = parameter.volume_heating * P[ip].voronoi_volume; // neutron heating acting on the grain region, using total volume.
+		P[ip].production = 0;
 		P[ip].phi =  P[ip].phi_ext; //initialisation for each particles; 0 by default
 	}
 
@@ -189,14 +190,14 @@ void  Cconfig::sum_heat()
         if(C[ic].B >=0)
 		P[C[ic].B].phi-= C[ic].phi ;
 		
-		if(C[ic].Flag_Boundary){
+/*		if(C[ic].Flag_Boundary){
 			double dPhi = -2.*C[ic].conductivity*C[ic].a *(parameter.average_temperature-20.0)*fabs(C[ic].dX.x[1])/cell.L.x[1]; //exp
 			P[C[ic].A].phi += dPhi;
             if(C[ic].B >=0)
 			P[C[ic].B].phi += dPhi;
 			heat_out += 2.0*dPhi;
 		}
-
+*/
 		if(simule_thermal_production)
 		{
 			P[C[ic].A].production+= C[ic].production/2.;

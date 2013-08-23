@@ -57,18 +57,18 @@ bool Ccontact::AM_I_CONTACTING()
 	if(B >= 0) deltaN = dx - pA->R - pB->R;
     
     if(B<0 && pB->R == INFINITE){ // wall contact
- //       if(pB->R == INFINITE) // flat walls
+//       if(pB->R == INFINITE) // flat walls
         dx = pB->nw*dX *(-1.0);
-        if(dx<0) cout<<'.';
+//        if(dx<0) cout<<'.';
         deltaN = dx - pA->R;
     }
     
 	if(LIQUID_TRANSFER && water_volume == 0.0) { // initial contact with sufficient water supply and smaller enough gap.
 		if(pA->water_volume + pB->water_volume >= 0.1 
-			&& deltaN <= 0.2*min(pA->R, pB->R) && LIQUID_TRANSFER) 
+			&& deltaN <= 0.2*min(pA->R, pB->R) && LIQUID_TRANSFER)  // NEED CHECK !!!
 			return true;
 	}
-	if((deltaN>=0 && deltaNB <= 0 && !LIQUID_TRANSFER) // Solid contact without water
+	if((deltaN>=0 && deltaNB <= parameter->max_gap && !LIQUID_TRANSFER) // Solid contact without water
 		|| (deltaN>=0 && deltaNB <= 0 && water_volume <= 1e-30) // non-existing capillary bridge
 		|| (water_volume>1e-30 && deltaN >= min(pow(water_volume,0.3333),MAX_CAP_LENGTH) ) ) // existing capillary bridge, rupture
 		return false; //there is no contact, and no pre-existing bond, and no capilary force (YG)
@@ -105,11 +105,11 @@ void Ccontact::relative_velocity()// 41 fp
 void Ccontact::increment_force(double dt)
 {
 	double fnold,fntest;
-	double aS = 0.0;
 	double deltaNS, RSeff;
 //	double dNB = 0.0;
 	double h0 = 0.1; //exp
 	double h = h0;
+    aS = 0.0;
 	
 	Cvector Vn;
 	Vn = alpha*dV;
@@ -325,18 +325,25 @@ bool Ccontact::rescale_slide(Cvector &F, double &F_norm, double F_norm_max)
 void Ccontact::EVALE_heat_flow()
 {
 	conductivity =  2.0* pA->k*pB->k/( pA->k+pB->k); //geo average
-	conductance();
-	phi = PI* conductivity/ALPHA *dT*(2.0*Reff)* HTotal;
-	phi_solid = 2.0*conductivity*a*dT;
+    phi_solid = 2.0*conductivity*a*dT;
+    
+	if( parameter->gas_conductivity != 0.0)
+    {
+        conductance();
+        phi = PI* conductivity/ALPHA *dT*(2.0*Reff)* HTotal;
+    }
+    if( parameter->gas_conductivity == 0.0) phi = phi_solid; // no gas conduction
 }	
 
 double  Ccontact::conductance() // for calculation of dimensionless conductance between particles
-{	
-//	ALPHA = parameter->ALPHA;
-	ALPHA = 10.0;
-	BETA = ALPHA * a/(2.0*Reff);
+{
+    ALPHA = parameter->bulk_conductivity / parameter->gas_conductivity;
+    
+	BETA = ALPHA * a /(2.0*Reff);
 	double H0 = 2.0*log(ALPHA)-3.9;
 	double HeHm = 0.0;
+    
+    if(BETA>0.0){
 	double BETAmin = 1.0; 
 	double BETAmax = 100.0;
 	if(BETA <= BETAmin) HeHm = 0.17*BETA*BETA;
@@ -345,7 +352,8 @@ double  Ccontact::conductance() // for calculation of dimensionless conductance 
 		double Hmin = 0.17*BETAmin*BETAmin;
 		double Hmax = 2.0*BETAmax/PI - 2.0 *log(BETAmax);
 		HeHm = Hmin + (Hmax - Hmin) *(BETA - BETAmin)/(BETAmax - BETAmin);
-	} 
+	}
+    }
 	HTotal = H0 + HeHm;
     return HTotal;
 }
