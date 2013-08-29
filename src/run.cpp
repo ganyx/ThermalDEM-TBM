@@ -22,8 +22,9 @@ void Crun::init_evolve(void)
 	where_save.check_path('w');		//check wheter the path already exist. If yes, stop.
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
 	
-	//Cell boundary input  
-//	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+	//Cell boundary input
+//	if(BRANCH=="LIB")
+//        get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
  
     // Converting to Keywords system
     config.cell.boundary = BOUNDARY;
@@ -38,8 +39,9 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
+    if(BRANCH != "LIB"){
     get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
-    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
+        get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
     
     config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
     config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
@@ -98,13 +100,26 @@ void Crun::init_evolve(void)
 		get_secure("Volume fraction (polymer)","VOL_POLYMER",config.parameter.VOL_polymer);
 		get_secure("Elastic modulus (polymer)","MODULE_POLYMER",config.parameter.MODULE_polymer);
 		get_secure("Viscosity (polymer)","VISCO_POLYMER",config.parameter.VISCO_polymer);
+        get_secure("Enter the composite fraction", "COMP_FRACTION", config.parameter.COMP_FRACTION);
 	}
 	
 	get_secure("Enter the conductivity of bulk grains","CONDUCTIVITY",config.parameter.bulk_conductivity);
 	get_secure("Enter the specific_heat of bulk grains","SPECIFIC_HEAT",config.parameter.specific_heat);
 	get_secure("Enter the thermal expansion of bulk grains","THER_EXPANSION",config.parameter.thermal_expansion);
+    
+    config.parameter.max_gap = 0.0;
+    config.parameter.gas_conductivity = 0.0;
+    config.parameter.volume_heating = 0.0;
+    config.parameter.init_temperature *= 0.0;
+    if(BRANCH=="TBM"){
+        get_secure("Enter the conductivity of the gas phase","GAS_CONDUCTIVITY",config.parameter.gas_conductivity);
+        get_secure("Eneter the max gap for gas phase conduction","MAX_GAP",config.parameter.max_gap);
+        get_secure("Enter volumetric heating profile","HEATING",config.parameter.volume_heating);
+        get_secure("Enter temperature (bottom wall, upper wall, initial grain)","WALL_TEMPERATURE",config.parameter.init_temperature);
+        config.Wall[3].T = config.parameter.init_temperature.x[0];        // bottom wall temperature
+        config.Wall[4].T = config.parameter.init_temperature.x[1];        // bottom wall temperature
+    }
 	
-	get_secure("Enter the composite fraction", "COMP_FRACTION", config.parameter.COMP_FRACTION);
 	get_secure("WETTING or DRYING, NO_LIQUID", "WETTING","DRYING","NO_LIQUID", choice);
 	if(choice=="WETTING"){
 		LIQUID_TRANSFER = true;
@@ -237,8 +252,9 @@ if(LIQUID_TRANSFER)
 			cout<<"Number of wetted grains: "<<np<<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"
 			<<config.saturation<<endl;
 			
-if(config.simule_thermal_conduction)
-		cout<<"System temperature: "<< config.parameter.average_temperature<<endl;
+if(config.simule_thermal_conduction){
+    cout<<"System temperature: "<< config.parameter.average_temperature<<"\t"<<config.Wall[3].T<<"\t"<<config.Wall[4].T<<"\t"<<config.parameter.volume_heating<<endl;
+}
 		
 if(config.simule_thermal_production){
 			cout<<"Heat in/out of the system:\t"<<config.heat_in<<"\t"<<config.heat_out<<endl;

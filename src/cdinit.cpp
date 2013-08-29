@@ -25,6 +25,8 @@ void  Cconfig::update_particle()
 		 	
 		if(BRANCH=="LIB") P[ip].r_polymer = parameter.VOL_polymer;
 		else P[ip].r_polymer = 0.0;
+        if(parameter.init_temperature.x[2] != 0.0)
+            P[ip].T = parameter.init_temperature.x[2];
 		P[ip].Tdot = 0.0;
 	}
 }
@@ -55,6 +57,7 @@ void Cconfig::update_wall()
         wtemp.nw.x[0] = 0.0;
         wtemp.nw.x[1] = 1.0;
         wtemp.nw.x[2] = 0.0;
+//        wtemp.T = parameter.init_temperature.x[0];        // bottom wall temperature
         Wall.push_back(wtemp);
         
         wtemp.id = -4; // ymax, plane
@@ -64,6 +67,7 @@ void Cconfig::update_wall()
         wtemp.nw.x[0] = 0.0;
         wtemp.nw.x[1] = -1.0;
         wtemp.nw.x[2] = 0.0;
+//        wtemp.T = parameter.init_temperature.x[1];        // top wall temperature
         Wall.push_back(wtemp);
         
         wtemp.id = -5; Wall.push_back(wtemp);
@@ -82,7 +86,7 @@ void Cconfig::create_random()
 //	get_secure("Enter the kind of boundary you want along the y direction", "PERIODIC_SHEAR","WALL_INCLINED","WALL_SHEAR",cell.boundary);
     
     cell.boundary = BOUNDARY;
-    cout<<BOUNDARY<<endl;
+//    cout<<BOUNDARY<<endl;
     
 	Npart_wall_bottom=0;
 	Npart_wall_top=0;
@@ -148,8 +152,8 @@ void Cconfig::create_random()
 	// adjusting cell.L.x[1] for initial packing: fix box size, and expansion of grains.
 	double volume=0.0;
 	for(int ip=0;ip<radius.size();ip++) volume += pow(radius[ip],3.0);
-	cell.L.x[1] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[2]);
-	cout<<"Adjusted cell height for the initial packing\t"<<cell.L.x[1]<<endl;
+	cell.L.x[2] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[1]);
+	cout<<"Adjusted cell depth for the initial packing\t"<<cell.L.x[2]<<endl;
 
 	set_random_grain(Npart_flow, radius); 
 

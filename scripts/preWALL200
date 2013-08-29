@@ -1,9 +1,9 @@
-rm -rf ./data/2500
+rm -rf ./data/W200
 ./DEM<<!
 CREATE
 WALL_BOX_Y
 ./data/W200 1
-SIZE_CELL 5 20 3 
+SIZE_CELL 5 5 3 
 COMPOSITION 1 
 VOLUME
 DMIN 0.8

@@ -1,5 +1,6 @@
 //#include <sdtlib.h>
 #include <iostream> //library for C++
+#include <algorithm>
 //#include <for>
 //#include <QList>	/**<Qt containers*/
 //#include <QThread>  /**<Qt multicore*/

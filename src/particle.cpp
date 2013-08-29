@@ -87,7 +87,7 @@ if(MELTING){
 		dRS = RS - RS_old;
 	}
 	}
-//if(!MELTING){T += Tdot*dt;
+if(!MELTING) T += Tdot*dt;
 	// Cap mod
 	//RS=R;
 	//dRS=0.0;
@@ -287,8 +287,10 @@ ofstream & operator<<(ofstream &file,Cparticle p)
     
     if(BRANCH=="LIB")
         file<<p.saturation<<"\t"<<p.water_volume; //scalar
+    else if(BRANCH=="TBM")
+        file<<p.T<<"\t"<<p.water_volume; //scalar
     else
-        file<<p.saturation<<"\t"<<p.water_volume; //scalar
+    file<<p.T<<"\t"<<p.water_volume; //scalar
 
     file<<endl;	//new line
  	return file;
@@ -302,6 +304,8 @@ ifstream & operator>>(ifstream &file,Cparticle &p)
 
        if(BRANCH=="LIB")
           file>>p.saturation>>p.water_volume;	//scalar
+       else if(BRANCH=="LIB")
+        file>>p.T>>p.water_volume;	//scalar
        else
           file>>p.saturation>>p.water_volume;	//scalar
     
