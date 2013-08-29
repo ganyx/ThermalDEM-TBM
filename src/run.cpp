@@ -39,7 +39,7 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
-    if(BRANCH != "LIB"){
+    if(BOUNDARY != "PERIODIC_SHEAR"){
     get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
         get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
     
