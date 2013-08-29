@@ -22,8 +22,9 @@ void Crun::init_evolve(void)
 	where_save.check_path('w');		//check wheter the path already exist. If yes, stop.
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
 	
-	//Cell boundary input  
-//	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+	//Cell boundary input
+//	if(BRANCH=="LIB")
+//        get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
  
     // Converting to Keywords system
     config.cell.boundary = BOUNDARY;
@@ -38,8 +39,9 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
+    if(BRANCH != "LIB"){
     get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
-    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
+        get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
     
     config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
     config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
@@ -251,7 +253,7 @@ if(LIQUID_TRANSFER)
 			<<config.saturation<<endl;
 			
 if(config.simule_thermal_conduction){
-    cout<<"System temperature: "<< config.parameter.average_temperature<<"\t"<<config.P[1].T<<"\t"<<config.Wall[4].T<<"\t"<<config.parameter.init_temperature.x[0]<<"\t"<<config.parameter.volume_heating<<endl;
+    cout<<"System temperature: "<< config.parameter.average_temperature<<"\t"<<config.Wall[3].T<<"\t"<<config.Wall[4].T<<"\t"<<config.parameter.volume_heating<<endl;
 }
 		
 if(config.simule_thermal_production){

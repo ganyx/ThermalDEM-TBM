@@ -179,7 +179,7 @@ void  Cconfig::sum_heat()
 	for(int ip=0; ip< P.size();ip++)
 	{ 
 //		P[ip].phi_ext=0;
-        P[ip].phi_ext = parameter.volume_heating * P[ip].voronoi_volume; // neutron heating acting on the grain region, using total volume.
+        P[ip].phi_ext = parameter.volume_heating * P[ip].voronoi_volume; // neutron (volumetric) heating acting on the grain region, using total volume.
 		P[ip].production = 0;
 		P[ip].phi =  P[ip].phi_ext; //initialisation for each particles; 0 by default
 	}

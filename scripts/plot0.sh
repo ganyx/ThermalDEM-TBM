@@ -11,5 +11,5 @@ set style circle radius 0.1
 set key at -4,6  box  
 set grid
 
-plot "data/2500/pos_11" using 1:2:(0.2*$10) with circles title 'initial' ,\
+plot "data/2500/pos_11" using 1:2:(0.5*$10):10 with circles title 'initial' lc palette,\
 "data/test/pos_11" using 1:2 title 'final' 
