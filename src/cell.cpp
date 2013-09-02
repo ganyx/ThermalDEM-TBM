@@ -48,7 +48,8 @@ Ccell::Ccell()//initialisation
 
 void Ccell::predictor(double dt,double dt2_on_2)
 {
-	if(boundary=="WALL_INCLINED")return;//nothing to do 
+	if(boundary=="WALL_INCLINED")return;//nothing to do
+    
 	if(normal_strain_control){
 		Yshift = Vdilat*dt;
 		L.x[1] += Yshift;
@@ -242,7 +243,7 @@ cout<<"\tNormal/Shear stress inside:\t"<<normal_stress_in<<"/"<<shear_stress_in<
     
 cout<<"\tCumulative shear strain:\t"<<cumul_strain<<endl;
 cout<<"\tShift of the top/bottom cell:\t"<<Xshift<<endl;
-cout<<"\tShear/Dilatation velocity:\t"<<Vshear<<"/"<<Ashear<<"/"<<Vdilat<<"/"<<Adilat<<endl;
+cout<<"\tShear/Dilatation velocity:\t"<<Vshear<<"/"<<Vdilat<<"/"<<cell_velocity.x[1]<<endl;
 }
 
 

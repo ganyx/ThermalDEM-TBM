@@ -39,7 +39,7 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
-    if(BOUNDARY != "PERIODIC_SHEAR"){
+    if(BOUNDARY != "PERIODIC_SHEAR"){ // no gravity component for PERIODIC_SHEAR
     get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
         get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
     
@@ -58,21 +58,35 @@ void Crun::init_evolve(void)
 	
 	else
 	{//input for plane shear
-//		config.cell.gravity=0;
-//		config.cell.slope=0;
+
         config.cell.Vdilat=0; config.cell.Adilat=0;
 		config.cell.shear_stress_control=0;
 		config.cell.shear_work_control=0;
 		config.cell.stick_slip=0;
+        config.cell.cell_vibration_freq = 0.0;
+        config.cell.cell_velocity *= 0.0;
+        config.cell.vibration_control =false;
 		
 		//get the normal stress or volume control;
-		get_secure("Do you want to control the normal stress or the volume", "NORMAL_STRESS","VOLUME", "STRAIN_RATE", choice);
-		if(choice=="NORMAL_STRESS"){config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext; }
-		if(choice=="VOLUME"){config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;}
+		get_secure("Do you want to control the normal stress or the volume",
+                   "NORMAL_STRESS","VOLUME", "STRAIN_RATE", "VIBRATION", choice);
+		if(choice=="NORMAL_STRESS"){
+            config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext;
+        }
+		if(choice=="VOLUME"){
+            config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;
+        }
 		if(choice=="STRAIN_RATE"){
 			config.cell.normal_stress_control=false; config.cell.Adilat=0;
 			config.cell.normal_strain_control=true;
-			double strain_rate; cin>>strain_rate; config.cell.Vdilat = -strain_rate*config.cell.L.x[1];}
+			double strain_rate; cin>>strain_rate; config.cell.Vdilat = -strain_rate*config.cell.L.x[1];
+        }
+        if(choice=="VIBRATION"){ // vibration
+            config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;
+            config.cell.vibration_control = true;
+            get_secure("Vibration frequency, dX = A sin(2 pi freq t)", "FREQUENCY", config.cell.cell_vibration_freq);
+            get_secure("Vibration amplitude, dX = A sin(2 pi freq t)", "AMPLITUDE", config.cell.cell_vibration_amplitude);
+        }
 	
 		//get the shear stress or shear rate control;
 		get_secure("Do you want to control the shear stress or the shear rate",
@@ -264,7 +278,7 @@ if(config.simule_thermal_production){
 				cout<<"Work control: "<<"\t"<<config.cell.shear_work_input
 				<<"\t The system: "<<config.cell.shear_stress_in*config.cell.shear_rate<<endl;		
 			config.cell.PRINT();
-			
+            			
 			
 		// history file
 		ofstream file;	

@@ -14,7 +14,7 @@ class Ccell
 	Cparticle *plan_bottom, *plan_top;
 
 	double mass;
-	Cvector rigid_velocity;  
+	Cvector rigid_velocity; /**< velocity for rigid motion, for boundary: PERIODIC_SHEAR only */
 	double normal_stress_ext,shear_stress_ext;
 	double normal_stress_in, shear_stress_in;
     double normal_stress_bottom, shear_stress_bottom;
@@ -28,6 +28,11 @@ class Ccell
 	double DeltaT,gradT;
 	double Xshift; 	/**< Sifh of the bottom and upper cells when shearing*/
 	double Yshift;
+    
+    double cell_vibration_freq;
+    Cvector cell_vibration_amplitude;
+    Cvector cell_velocity;  /**< this is the velocity for vibration of the wholce cell */
+    Cvector cell_offset;    /**< offset due to the external velocity, equals dt*cell_velocity */
 	
 	// work input control variables
 	bool shear_work_control;
@@ -45,6 +50,7 @@ class Ccell
 
 	bool normal_stress_control, shear_stress_control, gradT_control;
 	bool normal_strain_control;
+    bool vibration_control;
 
 	Cmatrix stress;
 

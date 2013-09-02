@@ -129,7 +129,13 @@ if(LIQUID_TRANSFER){
 }
 
 void Cconfig::predictor()
-{ 
+{
+    if(cell.vibration_control){
+        double B0 = 2.0*PI*cell.cell_vibration_freq;
+        cell.cell_velocity =  cell.cell_vibration_amplitude * cos(B0* t)*B0;
+        cell.cell_offset = cell.cell_velocity * dt;
+    }
+    
 	cell.predictor(dt,dt2_on_2);//move the cell
 
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
@@ -147,12 +153,16 @@ void Cconfig::predictor()
 
 void Cconfig::corrector()
 { 
-cell.corrector(dt_on_2);
+    cell.corrector(dt_on_2);
 
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
-for(int ip=0; ip< P.size();ip++)	
-		P[ip].corrector(dt_on_2,cell); 
-	 
+    for(int ip=0; ip< P.size();ip++)	
+        P[ip].corrector(dt_on_2,cell);
+    
+    if((BOUNDARY == "WALL_BOX_Y" || BOUNDARY == "BALL_BOX_Y") && cell.vibration_control){
+        Wall[3].X += cell.cell_offset; Wall[3].V = cell.cell_velocity;
+        Wall[4].X += cell.cell_offset; Wall[3].V = cell.cell_velocity;
+    }
 }
 
 void  Cconfig::sum_heat()
@@ -564,7 +574,7 @@ void Cconfig::fread(Cin_out where_to_read)
 		P[ip].id=ip;
 	}
 
-    
+//  if (BOUNDARY == "XXX")
     update_wall(); // update wall class
     
 	for(int ic=0;ic<C.size();ic++)

@@ -99,6 +99,12 @@ if(!MELTING) T += Tdot*dt;
 		}
 		dRS=0.0;
 	}
+    if(BRANCH=="NORMAL"){
+		if(dt==0) { // reset elasto-visous effects at the beginning, not ready for re-run.
+			RS=R;
+		}
+		dRS=0.0;
+	}
 }
 
 void Cparticle::corrector(double dt_on_2,Ccell &cell)
@@ -107,17 +113,21 @@ void Cparticle::corrector(double dt_on_2,Ccell &cell)
 		{
             Ome*=0;
             A*=0; V*=0;
-		A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat;
-		V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat;
+            A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat;
+            V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat;
+            V += cell.cell_velocity;
+            X += cell.cell_offset;
 //		X.x[1]= -cell.L.x[1]/2;
 		return;	
 		}
 	if(AM_I_BOUNDARY==+1 || AM_I_BOUNDARY==+2)
 		{
-		Ome*=0;
+            Ome*=0;
             A*=0; V*=0;
-		A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat;
-		V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat;
+            A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat;
+            V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat;
+            V += cell.cell_velocity;
+            X += cell.cell_offset;
 //		X.x[1]= cell.L.x[1]/2;
 		return;
 		}
@@ -128,14 +138,15 @@ void Cparticle::corrector(double dt_on_2,Ccell &cell)
 	OmeDotp=OmeDot;
 
 // Update total mass inside the cell, grain mass + water mass.
-	double msum = m + water_volume*LIQUID_DENSITY;
+    double msum = m;
+    if(LIQUID_TRANSFER) msum += water_volume*LIQUID_DENSITY;
 	A = Fsum/msum;
 	
 	V += (A-Ap)*dt_on_2;
 	OmeDot= Gsum/J;
 	Ome += (OmeDot-OmeDotp)*dt_on_2;
 	
-        cell.rigid_velocity += V *m;
+    cell.rigid_velocity += V *m;
     }
 }
 
