@@ -1,0 +1,30 @@
+rm -rf ./data/LIB
+./DEM<<!
+EVOLVE
+LIB 
+./data/2500	11	\\starts with this configuration
+./data/LIB  1
+PERIODIC_SHEAR   \\boundary condition
+CONDUCTION	NO
+PRODUCTION	NO
+EXPANSION	NO
+STRAIN_RATE 	0.0001   \\rate x T_END; total amount of strain
+SHEAR_RATE	0.0
+MODULE_N 	1000   \\for AM, CB is 1/10 of that, stress as to be scaled with that 
+FRICTION 	0.5
+TANG_CONSTANT 	1
+ROLL_CONSTANT 	1
+VOL_POLYMER	0.01     \\  not volume but size r_shell: 1/10 of r_am: r_ges=r_shell+r_am
+MODULE_POLYMER	1.0   \\E in Maxwell
+VISCO_POLYMER	1.0           \\nu in maxwell
+CONDUCTIVITY	1
+SPECIFIC_HEAT	100
+THER_EXPANSION  0.000001
+COMP_FRACTION	200    \\ number of particles in AM 
+NO_LIQUID
+T_INIT		0
+T_END		200   
+SAVE_BEGIN	0
+SAVE_PERIOD     10	\\saved every 10 steps
+NO_MORE_TASK
+!
