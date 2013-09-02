@@ -213,7 +213,7 @@ if(LIQUID_TRANSFER){
 // for solid contact, deltaNS < 0, deltaNB>=0!, Fn*nA negtive for compression.	
 //	Fn = nA*(deltaNS*E*aS - deltaNB*E*aB);				//normal force, imp. before 15.11.2010
 	fnold = fn; //renember the old value of normal force norm
-	fn = 4.0/3.0 * deltaNS*E*aS;
+	fn = 4.0/3.0 * deltaNS*E*aS;     //Hertz contact
 	Fn = nA*(fn + fcap);						//normal force
 	Ft += (uDotT*E* ct *aS*dt)  + (OmeMean^Ft)*dt; 		//increment norm and rotation for tangential force
 	Gn += (dOmeN*E*aS*aS*aS*dt) + (OmeMean^Gn)*dt ; 	//rolling moment cr is the numerical constant, dimensionless, for the rolling and twist 
@@ -277,8 +277,9 @@ if(LIQUID_TRANSFER){
 	
 	Fvis = Vn *LOCAL_DAMPLING;
 	
+    //in LIB: this Fvis is used:
 	if(BRANCH=="LIB" && parameter->VOL_polymer>0.0){ // need to check formulation !!
-		// Maxwell model for visco-elasticity
+		// Maxwell model for visco-elasticity for polymer shell
 		if(dt==0) fvis=0.0;
 		fvis = fvis + dt*parameter->MODULE_polymer*(nA*Vn/(pA->R + pB->R) *PI*a*a - fvis/parameter->VISCO_polymer);
 		Fvis = nA*fvis;
@@ -392,7 +393,7 @@ void Ccontact::set_me_in_main_cell()
 
 
 
- ofstream & operator<<(ofstream &file,Ccontact c)
+ ofstream & operator<<(ofstream &file,Ccontact c)  //output file
  {
  if(BRANCH=="LIB"){
  	file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
@@ -417,7 +418,7 @@ void Ccontact::set_me_in_main_cell()
 	}
 }
 	
-ifstream & operator>>(ifstream &file,Ccontact &c)
+ifstream & operator>>(ifstream &file,Ccontact &c) //input file
 {
 	file>>c.A;
 	file>>c.B;
