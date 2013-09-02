@@ -17,7 +17,12 @@ public:
 	double thermal_expansion;		/**< Thermal expansion coefficient (1/K).*/
 	string GSD;						/**< Type of grains size distribution, can be FRACTALE or UNIFORM.*/
 	double fractal_dim;				/**< Fractal dimension power of the grains size distribution.*/
-
+    
+    double gas_conductivity;        /**< Gas conductivity (W/m/K).*/
+    double max_gap;
+    double volume_heating;          /**< Neutronic heating profile per volume. */
+    Cvector init_temperature;        /**< Bottom wall, Top wall, initial grain temperaure */
+    
 	double t_inertia;				/**< Inertial time P \f$ \sqrt{ \frac{m}{Pd} }\f$. */
 	double t_collision;				/**< Collision time E \f$ \sqrt{ \frac{m}{Ed} }\f$ */
 	double t_thermal;				/**< Thermal time \f$ \frac{mc} {d k} \f$. */

@@ -87,7 +87,7 @@ if(MELTING){
 		dRS = RS - RS_old;
 	}
 	}
-//if(!MELTING){T += Tdot*dt;
+if(!MELTING) T += Tdot*dt;
 	// Cap mod
 	//RS=R;
 	//dRS=0.0;
@@ -99,41 +99,55 @@ if(MELTING){
 		}
 		dRS=0.0;
 	}
+    if(BRANCH=="NORMAL"){
+		if(dt==0) { // reset elasto-visous effects at the beginning, not ready for re-run.
+			RS=R;
+		}
+		dRS=0.0;
+	}
 }
 
 void Cparticle::corrector(double dt_on_2,Ccell &cell)
 {
 	if(AM_I_BOUNDARY==-1 || AM_I_BOUNDARY==-2 )
 		{
-		Ome*=0;
-		A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat; 
-		V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat; 
-		X.x[1]= -cell.L.x[1]/2;
+            Ome*=0;
+            A*=0; V*=0;
+            A.x[0]=	-cell.Ashear; A.x[1]= -cell.Adilat;
+            V.x[0]= -cell.Vshear; V.x[1]= -cell.Vdilat;
+            V += cell.cell_velocity;
+            X += cell.cell_offset;
+//		X.x[1]= -cell.L.x[1]/2;
 		return;	
 		}
 	if(AM_I_BOUNDARY==+1 || AM_I_BOUNDARY==+2)
 		{
-		Ome*=0;	
-		A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat; 
-		V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat; 
-		X.x[1]= cell.L.x[1]/2;
+            Ome*=0;
+            A*=0; V*=0;
+            A.x[0]=	+cell.Ashear; A.x[1]= +cell.Adilat;
+            V.x[0]= +cell.Vshear; V.x[1]= +cell.Vdilat;
+            V += cell.cell_velocity;
+            X += cell.cell_offset;
+//		X.x[1]= cell.L.x[1]/2;
 		return;
 		}
-
+    if(AM_I_BOUNDARY==0){
 //flowing particle
 	Cvector Ap,OmeDotp;
 	Ap=A;
 	OmeDotp=OmeDot;
 
 // Update total mass inside the cell, grain mass + water mass.
-	double msum = m + water_volume*LIQUID_DENSITY;
+    double msum = m;
+    if(LIQUID_TRANSFER) msum += water_volume*LIQUID_DENSITY;
 	A = Fsum/msum;
 	
 	V += (A-Ap)*dt_on_2;
 	OmeDot= Gsum/J;
 	Ome += (OmeDot-OmeDotp)*dt_on_2;
 	
-	cell.rigid_velocity += V *m;
+    cell.rigid_velocity += V *m;
+    }
 }
 
 void Cparticle::set_me_in_main_cell(Ccell &cell)
@@ -143,7 +157,8 @@ void Cparticle::set_me_in_main_cell(Ccell &cell)
 	cell.rescale(X.x[0],cell.L.x[0]);//check if out fron the right/left sides
 	cell.rescale(X.x[2],cell.L.x[2]);//check if out fron the front/back sides	
 		
-	if(cell.boundary=="PERIODIC_SHEAR")	//specificity of PERIODIC_SHEAR
+	if(cell.boundary=="PERIODIC_SHEAR"	//specificity of PERIODIC_SHEAR
+       || BRANCH == "CREATE")           // OR create sample stage for all type of Boundary conditions
 	{
 		if (X.x[1]>=cell.L.x[1]/2.)		//out fron the top side
 			{
@@ -263,8 +278,10 @@ void Cparticle::get_neighbour(Ccell &cell)
 		for(int B = 0; B< my_box[b]->contact_box[cb]->part.size();B++)	//for each particle of the contacting box
 		{
 		Cparticle *pB= my_box[b]->contact_box[cb]->part[B]; 
-		if(AM_I_BOUNDARY==0 || pB->AM_I_BOUNDARY==0 || (AM_I_BOUNDARY!=pB->AM_I_BOUNDARY)) //don't care of two stuck particle of the same plan
-		if(id>pB->id) neighbour.push_back(pB);					//Search within the same box: don't count twice the contact by accepting neigbours only with A.id>B.id
+		if(AM_I_BOUNDARY==0 || pB->AM_I_BOUNDARY==0 || (AM_I_BOUNDARY!=pB->AM_I_BOUNDARY))
+            //don't care of two stuck particle of the same plan
+		if(id>pB->id) neighbour.push_back(pB);
+            //Search within the same box: don't count twice the contact by accepting neigbours only with A.id>B.id
 		}
 		
 	if(cell.boundary=="PERIODIC_SHEAR") return;
@@ -276,24 +293,33 @@ void Cparticle::get_neighbour(Ccell &cell)
 
 ofstream & operator<<(ofstream &file,Cparticle p)
 {
-	if(BRANCH=="LIB"){
-	file<<p.X<<p.V<<p.Ome; //vector
-	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
-	file<<endl;	//new line
+    file<<p.X<<p.V<<p.Ome; //vector
+    file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.AM_I_BOUNDARY<<"\t"; //scalar
+    
+    if(BRANCH=="LIB")
+        file<<p.saturation<<"\t"<<p.water_volume; //scalar
+    else if(BRANCH=="TBM")
+        file<<p.T<<"\t"<<p.water_volume; //scalar
+    else
+    file<<p.T<<"\t"<<p.water_volume; //scalar
+
+    file<<endl;	//new line
  	return file;
-	}
-	else{
-	file<<p.X<<p.V<<p.Ome; //vector
-	file<<p.R<<"\t"<<p.m<<"\t"<<p.RS<<"\t"<<p.saturation<<"\t"<<p.water_volume;//scalar	
-	file<<endl;	//new line
- 	return file;
-	}
 }
 
 ifstream & operator>>(ifstream &file,Cparticle &p)
 {
 	file>>p.X>>p.V>>p.Ome; 	//vector
-	file>>p.R>>p.m>>p.water_pressure>>p.saturation>>p.water_volume;	//scalar
+	file>>p.R>>p.m>>p.RS>>p.AM_I_BOUNDARY; //scalar
+    
+
+       if(BRANCH=="LIB")
+          file>>p.saturation>>p.water_volume;	//scalar
+       else if(BRANCH=="LIB")
+        file>>p.T>>p.water_volume;	//scalar
+       else
+          file>>p.saturation>>p.water_volume;	//scalar
+    
  	return file;
 }
 

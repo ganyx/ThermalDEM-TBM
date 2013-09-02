@@ -48,7 +48,8 @@ Ccell::Ccell()//initialisation
 
 void Ccell::predictor(double dt,double dt2_on_2)
 {
-	if(boundary=="WALL_INCLINED")return;//nothing to do 
+	if(boundary=="WALL_INCLINED")return;//nothing to do
+    
 	if(normal_strain_control){
 		Yshift = Vdilat*dt;
 		L.x[1] += Yshift;
@@ -235,10 +236,14 @@ else	cout<<"\tNormal stress is not controlled: constant volume"<<endl;
 if(shear_stress_control)cout<<"\tShear stress is controlled:\t"<<shear_stress_ext<<endl;	
 else cout<<"\tShear rate is controlled:\t"<<shear_rate<<endl;	
 cout<<"\tNormal/Shear stress inside:\t"<<normal_stress_in<<"/"<<shear_stress_in<<endl;
-
+    
+    if(boundary == "BALL_BOX_Y"){
+        cout<<"\tNormal/Shear stress bottom:\t"<<normal_stress_bottom<<"/"<<shear_stress_bottom<<endl;
+        cout<<"\tNormal/Shear stress top:\t"<<normal_stress_top<<"/"<<shear_stress_top<<endl;}
+    
 cout<<"\tCumulative shear strain:\t"<<cumul_strain<<endl;
 cout<<"\tShift of the top/bottom cell:\t"<<Xshift<<endl;
-cout<<"\tShear/Dilatation velocity:\t"<<Vshear<<"/"<<Vdilat<<endl;
+cout<<"\tShear/Dilatation velocity:\t"<<Vshear<<"/"<<Vdilat<<"/"<<cell_velocity.x[1]<<endl;
 }
 
 

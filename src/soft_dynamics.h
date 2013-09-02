@@ -1,5 +1,6 @@
 //#include <sdtlib.h>
 #include <iostream> //library for C++
+#include <algorithm>
 //#include <for>
 //#include <QList>	/**<Qt containers*/
 //#include <QThread>  /**<Qt multicore*/
@@ -24,6 +25,7 @@ using namespace std; // for a easier use of cin and cout
 
 #define DIM 3  	/**< Space dimension. */ 
 #define PI 3.1415926535 
+#define INFINITE 1.e20
 #define R_SCALE_FACTOR 2.0		/**< scaling factor for initial packing, only for CREATE stage */
 #define MESH_SIZE 2.0  	/**< ratio of mesh size and the maximum particle diameter */
 #define INIT_BOND 0
@@ -58,6 +60,7 @@ bool LIQUID_TRANSFER;
 #define MELTING false
 bool Voronoi_Update;
 string BRANCH;
+string BOUNDARY;
 
 #define PSEUDO_2D 0 /**< 1= yes 0 = no (then 3D)*/	     
 	     

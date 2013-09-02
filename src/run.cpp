@@ -22,21 +22,34 @@ void Crun::init_evolve(void)
 	where_save.check_path('w');		//check wheter the path already exist. If yes, stop.
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
 	
-	//Cell boundary input  
-	get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+	//Cell boundary input
+//	if(BRANCH=="LIB")
+//        get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
+ 
+    // Converting to Keywords system
+    config.cell.boundary = BOUNDARY;
 	
 	//what to simulate
 	get_secure("Do you want to simule the thermal conduction", "CONDUCTION",	config.simule_thermal_conduction);
 	get_secure("Do you want to simule the thermal production", "PRODUCTION",	config.simule_thermal_production);
 	get_secure("Do you want to simule the thermal expansion", "EXPANSION",		config.simule_thermal_expansion);
-		
+
+    // Initial g vector
+    config.cell.g.x[0]= 0.0;
+    config.cell.g.x[1]= 0.0;
+    config.cell.g.x[2]= 0.0;
+    
+    if(BOUNDARY != "PERIODIC_SHEAR"){ // no gravity component for PERIODIC_SHEAR
+    get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
+        get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
+    
+    config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
+    config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
+    config.cell.g.x[2]= 0.0;
 	
 	string choice;
-	if(config.cell.boundary=="WALL_INCLINED")
-	{//input for inclined plane 
-		get_secure("Enter the gravity","GRAVITY",config.cell.gravity);
-		get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
-	
+	if(config.cell.boundary =="WALL_INCLINED") //input for inclined plane
+	{
 		config.cell.normal_stress_control=false;
 		config.cell.normal_stress_ext=0;
 		config.cell.normal_stress_control=false;
@@ -45,20 +58,35 @@ void Crun::init_evolve(void)
 	
 	else
 	{//input for plane shear
-		config.cell.gravity=0;
-		config.cell.slope=0;
+
+        config.cell.Vdilat=0; config.cell.Adilat=0;
 		config.cell.shear_stress_control=0;
 		config.cell.shear_work_control=0;
 		config.cell.stick_slip=0;
+        config.cell.cell_vibration_freq = 0.0;
+        config.cell.cell_velocity *= 0.0;
+        config.cell.vibration_control =false;
 		
 		//get the normal stress or volume control;
-		get_secure("Do you want to control the normal stress or the volume", "NORMAL_STRESS","VOLUME", "STRAIN_RATE", choice);
-		if(choice=="NORMAL_STRESS"){config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext; }
-		if(choice=="VOLUME"){config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;}
+		get_secure("Do you want to control the normal stress or the volume",
+                   "NORMAL_STRESS","VOLUME", "STRAIN_RATE", "VIBRATION", choice);
+		if(choice=="NORMAL_STRESS"){
+            config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext;
+        }
+		if(choice=="VOLUME"){
+            config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;
+        }
 		if(choice=="STRAIN_RATE"){
 			config.cell.normal_stress_control=false; config.cell.Adilat=0;
 			config.cell.normal_strain_control=true;
-			double strain_rate; cin>>strain_rate; config.cell.Vdilat = -strain_rate*config.cell.L.x[1];}
+			double strain_rate; cin>>strain_rate; config.cell.Vdilat = -strain_rate*config.cell.L.x[1];
+        }
+        if(choice=="VIBRATION"){ // vibration
+            config.cell.normal_stress_control=false; config.cell.Vdilat=0; config.cell.Adilat=0;
+            config.cell.vibration_control = true;
+            get_secure("Vibration frequency, dX = A sin(2 pi freq t)", "FREQUENCY", config.cell.cell_vibration_freq);
+            get_secure("Vibration amplitude, dX = A sin(2 pi freq t)", "AMPLITUDE", config.cell.cell_vibration_amplitude);
+        }
 	
 		//get the shear stress or shear rate control;
 		get_secure("Do you want to control the shear stress or the shear rate",
@@ -86,13 +114,26 @@ void Crun::init_evolve(void)
 		get_secure("Volume fraction (polymer)","VOL_POLYMER",config.parameter.VOL_polymer);
 		get_secure("Elastic modulus (polymer)","MODULE_POLYMER",config.parameter.MODULE_polymer);
 		get_secure("Viscosity (polymer)","VISCO_POLYMER",config.parameter.VISCO_polymer);
+        get_secure("Enter the composite fraction", "COMP_FRACTION", config.parameter.COMP_FRACTION);
 	}
 	
 	get_secure("Enter the conductivity of bulk grains","CONDUCTIVITY",config.parameter.bulk_conductivity);
 	get_secure("Enter the specific_heat of bulk grains","SPECIFIC_HEAT",config.parameter.specific_heat);
 	get_secure("Enter the thermal expansion of bulk grains","THER_EXPANSION",config.parameter.thermal_expansion);
+    
+    config.parameter.max_gap = 0.0;
+    config.parameter.gas_conductivity = 0.0;
+    config.parameter.volume_heating = 0.0;
+    config.parameter.init_temperature *= 0.0;
+    if(BRANCH=="TBM"){
+        get_secure("Enter the conductivity of the gas phase","GAS_CONDUCTIVITY",config.parameter.gas_conductivity);
+        get_secure("Eneter the max gap for gas phase conduction","MAX_GAP",config.parameter.max_gap);
+        get_secure("Enter volumetric heating profile","HEATING",config.parameter.volume_heating);
+        get_secure("Enter temperature (bottom wall, upper wall, initial grain)","WALL_TEMPERATURE",config.parameter.init_temperature);
+        config.Wall[3].T = config.parameter.init_temperature.x[0];        // bottom wall temperature
+        config.Wall[4].T = config.parameter.init_temperature.x[1];        // bottom wall temperature
+    }
 	
-	get_secure("Enter the composite fraction", "COMP_FRACTION", config.parameter.COMP_FRACTION);
 	get_secure("WETTING or DRYING, NO_LIQUID", "WETTING","DRYING","NO_LIQUID", choice);
 	if(choice=="WETTING"){
 		LIQUID_TRANSFER = true;
@@ -114,7 +155,8 @@ void Crun::init_evolve(void)
 		}
 	if(choice!="NO_LIQUID")
 	{
-	get_secure("Enter the GRAVITY", "GRAVITY", config.GRAVITY);
+//    get_secure("Enter the gravity","GRAVITY",config.cell.gravity);
+//    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
 	get_secure("Enter the MAX_SCAN_SATURATION", "MAX_SCAN", config.MAX_SCAN);
 	get_secure("Enter the MIN_SCAN_SATURATION", "MIN_SCAN", config.MIN_SCAN);
 	get_secure("Enter the SURFACE_TENSION", "SURFACE_TENSION", config.parameter.SURFACE_TENSION);
@@ -150,6 +192,7 @@ void Crun::init_evolve(void)
 	
 	config.Voronoi_Update = true;	
 	config.update_particle();
+//    config.update_wall();
 	config.iterate(0.0);
 
 	cout<<"Initialisation of the parameter:\t SUCCESS"<<endl;  
@@ -223,8 +266,9 @@ if(LIQUID_TRANSFER)
 			cout<<"Number of wetted grains: "<<np<<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"
 			<<config.saturation<<endl;
 			
-if(config.simule_thermal_conduction)
-		cout<<"System temperature: "<< config.parameter.average_temperature<<endl;
+if(config.simule_thermal_conduction){
+    cout<<"System temperature: "<< config.parameter.average_temperature<<"\t"<<config.Wall[3].T<<"\t"<<config.Wall[4].T<<"\t"<<config.parameter.volume_heating<<endl;
+}
 		
 if(config.simule_thermal_production){
 			cout<<"Heat in/out of the system:\t"<<config.heat_in<<"\t"<<config.heat_out<<endl;
@@ -234,7 +278,7 @@ if(config.simule_thermal_production){
 				cout<<"Work control: "<<"\t"<<config.cell.shear_work_input
 				<<"\t The system: "<<config.cell.shear_stress_in*config.cell.shear_rate<<endl;		
 			config.cell.PRINT();
-			
+            			
 			
 		// history file
 		ofstream file;	

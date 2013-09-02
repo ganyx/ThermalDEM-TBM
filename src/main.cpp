@@ -13,23 +13,36 @@ omp_set_num_threads(NTHREADS); // MPI
 	
 cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
 
-cout<<"Type the action you want to perform (check the documentation for more details):"<<endl;
-cout<<"\tCREATE: creates a new random configuration"<<endl;
-cout<<"\tEVOLVE: reads an existing configuration and makes it evolves"<<endl;
-//cout<<"\tPOST_PROCESS: reads an existing configuration and measures all sort of averages"<<endl;
-//cout<<"\tVISUALISATION: reads an existing configuration and draws it on an opengl basis"<<endl;
+    // Branch information to preset the code
+    cout<<"Select the branch for simulations, branches provide typical parameter presetting:"<<endl;
+    cout<<"\tCREATE: prepare initial packing."<<endl;
+    cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
+    cout<<"\tCAPDEM: DEM for capillary interaction"<<endl;
+    cout<<"\tTBM: DEM code for fusion blanket TBM systems"<<endl;
+    cout<<"\tNORMAL: Standard input"<<endl;
+    cin>> BRANCH;
+    
+    // Boundary type: cubic box / cylidical + periodic / wall
+    cout<<"Type of geometrical boundary, selection from below:"<<endl;
+    cout<<"\tPERIODIC_BOX: periodic cubic box with stress/strain control at y-axis."<<endl;
+    cout<<"\tPERIODIC_BOX_XYZ: periodic cubic box with stress/strain control at all direction."<<endl;
+    cout<<"\tWALL_BOX: fixed wall condition at x, y and z-axis."<<endl;
+    cout<<"\tWALL_BOX_Y: special case with WALL_BOX, walls at y-axis."<<endl;
+    cout<<"\tWALL_BOX_XYZ: controllable wall conditions at all directions."<<endl;
+    cout<<"\tBALL_BOX: rough walls at x, y, and z-axis."<<endl;
+    cout<<"\tBALL_BOX_Y: rough walls at y-axis, periodic conditions at x and z-axis."<<endl;
+    cout<<"\tCYLINDER: wall conditon with cyliderical container."<<endl;
+    cout<<"\tPERIODIC_CYLINDER: periodic condition along cylinderical height."<<endl;
+    cin>> BOUNDARY;
 
-string action;
-cin>> action;
-
-if(action!="CREATE" && action!="EVOLVE")
-	{serror="The action '"+action+"' does not exit. Choices are  'CREATE' / 'EVOLVE'";
-	STOP("main.cpp", "main()",serror);}
-	
-cout<<"The selected action is: "<<action<<endl<<endl;
+//if(action!="CREATE" && action!="EVOLVE")
+//	{serror="The action '"+action+"' does not exit. Choices are  'CREATE' / 'EVOLVE'";
+//	STOP("main.cpp", "main()",serror);}
+//	
+//cout<<"The selected action is: "<<action<<endl<<endl;
 
 
-if(action=="CREATE")//not parallel
+if(BRANCH=="CREATE")
 {	
 	Crun_create run;
 
@@ -39,25 +52,17 @@ if(action=="CREATE")//not parallel
 	
 	run.config.create_random();	//create
 	run.init_packing();
-	run.config.fprint(run.where_save);//save
+	run.config.fprint(run.where_save);//save the final configuration
 }
 
 
-if(action=="EVOLVE")//can be parallel
+if(BRANCH!="CREATE")
 	{
-
-cout<<"Select the branch for simulations, branches provide typical parameter presetting:"<<endl;
-cout<<"\tLIB: DEM for Lithium-ion batteries"<<endl;
-cout<<"\tCAPDEM: DEM for capillary interaction"<<endl;
-cout<<"\tThermal-DEM:"<<endl;
-cout<<"\tNORMAL: Standard input"<<endl;
-cin>> BRANCH;
-
-	Crun Lrun[1];//24 is the max number of processor
+        Crun Lrun;
 		
-	Lrun[0].init_evolve();
+	Lrun.init_evolve();
 	start = clock(); t0 = time(NULL);
-	Lrun[0].evolve();
+	Lrun.evolve();
 	
 	end = clock();t1 = time(NULL);
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC / NTHREADS;

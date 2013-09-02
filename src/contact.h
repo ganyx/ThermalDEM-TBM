@@ -43,6 +43,7 @@ class Ccontact
 
 	double deltaN; /** Normal deflection.*/
 	double a; /**< Radius of the interacting region.*/
+    double aS; /**< Radius of the interacting region: solid.*/
 	double age;/**< Age of the contact.*/
 	
 	double E;

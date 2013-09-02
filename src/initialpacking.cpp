@@ -40,6 +40,7 @@ void Crun::init_packing()
 	
 	config.Voronoi_Update = true;	
 	config.update_particle();
+    config.update_wall();
 	config.iterate(0.0);
 	
 	int vflag=0;
@@ -63,7 +64,7 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		
 		
 		config.Voronoi_Update = false;
-		if(vflag%50 == 0) config.Voronoi_Update = true;
+		if(vflag%10 == 0) config.Voronoi_Update = true;
 		vflag++;
 		
 		if( save.should_do(config.t) ) //save if asked
@@ -94,6 +95,25 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		file.close();
 		}
 	}
+    
+
+    int ipflow = config.P.size();
+    
+    for(int ip=0; ip<config.P.size();ip++){
+        config.P[ip].V *= 0.0;
+        config.P[ip].Ome *= 0.0;
+        
+        // BALL_WALL_Y boundary conditions
+        if(config.cell.boundary == "BALL_BOX_Y")
+        {
+        if(config.P[ip].X.x[1] >= config.cell.L.x[1]/2.0 - config.parameter.Dmax)
+            config.P[ip].AM_I_BOUNDARY = 1;
+        if(config.P[ip].X.x[1] <= -config.cell.L.x[1]/2.0 + config.parameter.Dmax)
+            config.P[ip].AM_I_BOUNDARY = -1;
+        if(config.P[ip].AM_I_BOUNDARY != 0) ipflow--;
+        }
+    }
+    cout<<"The number of flowing particles is: "<<ipflow <<" out of total "<<config.P.size()<<" particles."<<endl;
 
 	cout<<"Initial packing process finished: SUCCESS"<<endl<<endl;	
 	return;

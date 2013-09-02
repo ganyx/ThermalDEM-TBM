@@ -25,8 +25,54 @@ void  Cconfig::update_particle()
 		 	
 		if(BRANCH=="LIB") P[ip].r_polymer = parameter.VOL_polymer;
 		else P[ip].r_polymer = 0.0;
+        if(parameter.init_temperature.x[2] != 0.0)
+            P[ip].T = parameter.init_temperature.x[2];
 		P[ip].Tdot = 0.0;
 	}
+}
+
+void Cconfig::update_wall()
+{
+    Cparticle wtemp;
+    Wall.clear();
+    
+    if(cell.boundary=="WALL_BOX_Y"
+       || cell.boundary=="BALL_BOX_Y"
+)
+    {
+        wtemp.R = INFINITE;
+        wtemp.RS = INFINITE; // solid core for contact force
+        wtemp.E = parameter.MODULE_N;
+        wtemp.T = 100.0;        // wall temperature
+        wtemp.k = parameter.bulk_conductivity;
+        
+        wtemp.id = 0; Wall.push_back(wtemp); // place holder, dummy
+        wtemp.id = -1; Wall.push_back(wtemp);
+        wtemp.id = -2; Wall.push_back(wtemp);
+        
+        wtemp.id = -3; // ymin, plane
+        wtemp.X.x[0] = 0.0;
+        wtemp.X.x[1] = -cell.L.x[1]/2.0;
+        wtemp.X.x[2] = 0.0;
+        wtemp.nw.x[0] = 0.0;
+        wtemp.nw.x[1] = 1.0;
+        wtemp.nw.x[2] = 0.0;
+//        wtemp.T = parameter.init_temperature.x[0];        // bottom wall temperature
+        Wall.push_back(wtemp);
+        
+        wtemp.id = -4; // ymax, plane
+        wtemp.X.x[0] = 0.0;
+        wtemp.X.x[1] = cell.L.x[1]/2.0;
+        wtemp.X.x[2] = 0.0;
+        wtemp.nw.x[0] = 0.0;
+        wtemp.nw.x[1] = -1.0;
+        wtemp.nw.x[2] = 0.0;
+//        wtemp.T = parameter.init_temperature.x[1];        // top wall temperature
+        Wall.push_back(wtemp);
+        
+        wtemp.id = -5; Wall.push_back(wtemp);
+        wtemp.id = -6; Wall.push_back(wtemp);
+    }
 }
 	
 void Cconfig::create_random()
@@ -37,8 +83,14 @@ void Cconfig::create_random()
 	//System size	
 	get_secure("Enter the size of the system","SIZE_CELL",cell.L);
 	//Kind of boundary	
-	get_secure("Enter the kind of boundary you want along the y direction", "PERIODIC_SHEAR","WALL_INCLINED","WALL_SHEAR",cell.boundary);
-
+//	get_secure("Enter the kind of boundary you want along the y direction", "PERIODIC_SHEAR","WALL_INCLINED","WALL_SHEAR",cell.boundary);
+    
+    cell.boundary = BOUNDARY;
+//    cout<<BOUNDARY<<endl;
+    
+	Npart_wall_bottom=0;
+	Npart_wall_top=0;
+    
 	if(cell.boundary=="PERIODIC_SHEAR")
 	{
 	Npart_wall_bottom=0;	
@@ -100,8 +152,8 @@ void Cconfig::create_random()
 	// adjusting cell.L.x[1] for initial packing: fix box size, and expansion of grains.
 	double volume=0.0;
 	for(int ip=0;ip<radius.size();ip++) volume += pow(radius[ip],3.0);
-	cell.L.x[1] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[2]);
-	cout<<"Adjusted cell height for the initial packing\t"<<cell.L.x[1]<<endl;
+	cell.L.x[2] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[1]);
+	cout<<"Adjusted cell depth for the initial packing\t"<<cell.L.x[2]<<endl;
 
 	set_random_grain(Npart_flow, radius); 
 
@@ -242,32 +294,34 @@ void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
 		part.R_scale = radius[p];
 		part.id=P.size();
 		part.AM_I_BOUNDARY=0;
-		P.push_back(part);//save the new particle	
+		P.push_back(part);//save the new particle
+        
+        Cvector offset;
+        offset *= 0.0;
+        if(cell.boundary == "WALL_BOX_Y") offset.x[1]= parameter.Dmax/2.0/R_SCALE_FACTOR;
 
 		do
 			{
 			position_occupied=false;	
 			
-			for(int i=0;i<DIM;i++) P[P.size()-1].X.x[i]=UNIFORM_RANDOM_DOUBLE(-cell.L.x[i]/2.,cell.L.x[i]/2.);	
+			for(int i=0;i<DIM;i++)
+                P[P.size()-1].X.x[i]=UNIFORM_RANDOM_DOUBLE(-cell.L.x[i]/2. + offset.x[i], cell.L.x[i]/2. - offset.x[i]);
 			if(PSEUDO_2D) P[P.size()-1].X.x[2]=0.; // if we are in 2D, this component of position is zero
 
-			P[P.size()-1].set_in_box(mesh,cell);
-			P[P.size()-1].get_neighbour(cell);
-
-			for(int in=0; in<P[P.size()-1].neighbour.size();in++) 
+            for(int in=0; in<P.size()-1;in++)
 				{
-				Ccontact cont(&P[P.size()-1], P[P.size()-1].neighbour[in], &cell, &parameter);		
-				if(cont.AM_I_CONTACTING())
-					{	
-					P[P.size()-1].remove_from_box(); 
-					position_occupied=true; 
-					break;
+                    Ccontact cont(&P[P.size()-1], &P[in], &cell, &parameter);
+                    if(cont.AM_I_CONTACTING())
+					{
+                        P[P.size()-1].remove_from_box();
+                        position_occupied=true;
+                        break;
 					}
 				}
 				
 			}while(position_occupied);
 		
-		if(p%200==0) cout<<"Number of particles set: "<<p<<endl;//write on screen every when 200 more grains found there place 
+		if(p%100==0) cout<<"Number of particles set: "<<p<<endl;//write on screen every when 200 more grains found there place
 	}
 
 double frac_sol = 0;

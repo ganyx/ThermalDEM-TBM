@@ -9,7 +9,7 @@ class Cnode;
 class Cparticle
 {
 public:
-	int id;
+    int id;
 	Cvector X;             /**< Particle position. */ 
 	Cvector V;             /**< Particle velocity.*/ 
 	Cvector A;             /**< Particle acceleration. */ 
@@ -17,6 +17,7 @@ public:
 	Cvector OmeDot;        /**< Particle angular acceleration. */ 
 	Cvector Fsum;          /**< Sum of forces the particle is subjected to.*/
 	Cvector Gsum;          /**< Sum of moment the particle is subjected to.*/
+    Cvector nw;            /**< Surface normal for flat walls. Only for walls */
 
 	Cvector Fext;          /**< External forces the particle is subjected to.*/
 	Cvector Gext;          /**< External moment the particle is subjected to.*/
