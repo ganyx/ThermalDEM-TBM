@@ -33,6 +33,7 @@ public:
 	double c;				/**<Heat capacity.*/
 	double e;				/**<Thermal expantion coefficient.*/
 	double r_polymer;		/**<Polymer layer thickness = r_polymer*RS. */
+    double dr_swelling;		/**<Core size swelling rate, dr_swelling = SWELLING_RATE * RS. */
 	
 	double Tm;
 	double Lm;

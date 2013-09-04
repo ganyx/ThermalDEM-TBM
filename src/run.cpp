@@ -115,6 +115,7 @@ void Crun::init_evolve(void)
 		get_secure("Elastic modulus (polymer)","MODULE_POLYMER",config.parameter.MODULE_polymer);
 		get_secure("Viscosity (polymer)","VISCO_POLYMER",config.parameter.VISCO_polymer);
         get_secure("Enter the composite fraction", "COMP_FRACTION", config.parameter.COMP_FRACTION);
+        get_secure("Grain swelling rate", "SWELLING_RATE", config.parameter.SWELLING_RATE);
 	}
 	
 	get_secure("Enter the conductivity of bulk grains","CONDUCTIVITY",config.parameter.bulk_conductivity);

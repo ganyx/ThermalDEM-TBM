@@ -93,11 +93,9 @@ if(!MELTING) T += Tdot*dt;
 	//dRS=0.0;
 //}
 	// Polymer layer
-	if(BRANCH=="LIB"){
-		if(dt==0) { // reset elasto-visous effects at the beginning, not ready for re-run.
-			RS=R; R=(1.0+r_polymer)*RS;
-		}
-		dRS=0.0;
+	if(BRANCH=="LIB" && dr_swelling != 0){
+        RS += dr_swelling * dt;     // Solid core increase radius
+        R = RS + r_polymer;           // Update total radius, keep the same shell thickness
 	}
     if(BRANCH=="NORMAL"){
 		if(dt==0) { // reset elasto-visous effects at the beginning, not ready for re-run.

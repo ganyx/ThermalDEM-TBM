@@ -38,6 +38,7 @@ public:
 	
 	int COMPOSITION;
 	int COMP_FRACTION; 			/**< Only for two speices, number of the speice 1 */
+    double SWELLING_RATE;
 	
 	double total_mass;
 	double average_temperature;

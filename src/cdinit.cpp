@@ -23,7 +23,12 @@ void  Cconfig::update_particle()
 		P[ip].e = parameter.thermal_expansion;
 		P[ip].J = 2./5.*P[ip].m* P[ip].R*P[ip].R;
 		 	
-		if(BRANCH=="LIB") P[ip].r_polymer = parameter.VOL_polymer;
+		if(BRANCH=="LIB") {
+            P[ip].RS = P[ip].R;
+            P[ip].r_polymer = parameter.VOL_polymer * P[ip].RS; // Testing, fraction of RS
+            P[ip].R= P[ip].RS +P[ip].r_polymer; 
+            P[ip].dr_swelling = parameter.SWELLING_RATE *P[ip].RS ; // Fixed size of core increment
+        }
 		else P[ip].r_polymer = 0.0;
         if(parameter.init_temperature.x[2] != 0.0)
             P[ip].T = parameter.init_temperature.x[2];
