@@ -1,0 +1,17 @@
+rm -rf ./data/2500  \\ clean the old file
+./DEM<<!
+CREATE 
+./data/2500 1
+SIZE_CELL 5 20 5   \* x y z with y not fix: will be adjusted to reach PF and has to be calculated from volume afterwards */
+PERIODIC_SHEAR  \\ periodic boundary conditions
+COMPOSITION 2    \\ two types of particles, large scatter around 1, small around 2
+VOLUME   \\equal volume fraction for particles of comp 1: amount of larger is less       
+DMIN 0.9         
+DMAX 1.1
+NPART_FLOW 200      \\number of large particles
+VOLUME  \\const. volume fraction. other option: uniform -> same amount of each size? 
+DMIN 0.45
+DMAX 0.55
+NPART_FLOW 400      \\number of small particles
+PACKING 0.62
+!
