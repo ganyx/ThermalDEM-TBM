@@ -2,3 +2,5 @@ scripts/data/
 scripts/DEM
 scripts/main.o
 *.xcuserstate
+scripts/DEM
+scripts/main.o
