@@ -114,6 +114,17 @@ void get_secure(string message, string key1, string key2, string key3, string ke
 	cout<<"\t="<<choice<<endl;
 }
 
+void get_secure(string message, string key1, string key2, string key3, string key4, string key5, string &choice)
+{
+    cout<<message<<" ("<<key1<<" or "<<key2<<" or "<<key3<<" or "<<key4<<" or "<<key5<<")";
+    cin>>choice;
+    
+    if(choice!= key1 && choice!=key2  && choice!=key3 && choice!=key4 && choice!=key5)
+    {serror="The value '"+choice+"' does not match the expected choices: '"+key1+"' or '"+key2+"' or '"+key3+"' or '"+key4+" ' or '"+key5+"'";
+        STOP("inout.cpp", "get_secure(string message, string, string, string, string, string, string &)",serror);}
+    cout<<"\t="<<choice<<endl;
+}
+
 void get_secure(string message, string key, bool &data)
 {
 	string choice,key_test;

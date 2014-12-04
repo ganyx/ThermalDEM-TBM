@@ -17,7 +17,7 @@ void  Cconfig::update_particle()
 			P[ip].k = 5.0*parameter.bulk_conductivity;
 			P[ip].E = parameter.MODULE_N / 10.0;
 		}
-		
+		P[ip].m = 4./3. * PI * pow(P[ip].R,3)*parameter.RHO;
 		P[ip].c = parameter.specific_heat;
 //		P[ip].k = parameter.bulk_conductivity;
 		P[ip].e = parameter.thermal_expansion;
@@ -47,7 +47,7 @@ void Cconfig::update_wall()
     {
         wtemp.R = INFINITE;
         wtemp.RS = INFINITE; // solid core for contact force
-        wtemp.E = parameter.MODULE_N;
+        wtemp.E = parameter.MODULE_N; // wall stiffness
         wtemp.T = 100.0;        // wall temperature
         wtemp.k = parameter.bulk_conductivity;
         
@@ -79,6 +79,16 @@ void Cconfig::update_wall()
         wtemp.id = -6; Wall.push_back(wtemp);
     }
 }
+
+void Cconfig::init_wall()
+{
+    for(int iw=0; iw<Wall.size();iw++)
+    {
+        Wall[iw].E = parameter.wall_E;
+        Wall[iw].k = parameter.wall_conductivity;
+    }
+}
+
 	
 void Cconfig::create_random()
 {
@@ -135,7 +145,7 @@ void Cconfig::create_random()
 			 get_secure("Enter the solid fraction wanted","SOLID_FRACTION", cell.solid_fraction);
 		 }
 		 
-	srand( (unsigned int) time(NULL)+getpid());//Init of random
+	srand( (unsigned int) time(NULL));//Init of random
 	cout<<endl<<"Start the random setting of grains"<<endl;
 	
 	set_wall_grain(Npart_wall_bottom, Npart_wall_top); //set the grain of the wall and the planes (if there is any wall)
@@ -166,7 +176,9 @@ void Cconfig::create_random()
 	for(int ip=0;ip<P.size();ip++)//example of how to initiate things, mass is to be initiated here, it won't be change after
 	{
 		double RHO;
-		RHO = 6./PI; //mass 1 for diameter 1, at temperature 20 C (may change with thermal expansion)
+        parameter.RHO = 1.0;
+//      RHO = 6./PI; //mass 1 for diameter 1, at temperature 20 C (may change with thermal expansion)
+        RHO = parameter.RHO;  // default density is 1.0, may be changed during EVOLVE stage.
 		
 		if(P[ip].AM_I_BOUNDARY==0)//flowing particle
 		{

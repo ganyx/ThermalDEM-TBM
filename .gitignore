@@ -4,3 +4,7 @@ scripts/main.o
 *.xcuserstate
 scripts/DEM
 scripts/main.o
+
+*.xcuserstate
+
+xcode/xcode.xcodeproj/project.xcworkspace/xcuserdata/yixiang.xcuserdatad/UserInterfaceState.xcuserstate

@@ -64,7 +64,7 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		
 		
 		config.Voronoi_Update = false;
-		if(vflag%10 == 0) config.Voronoi_Update = true;
+		if(vflag%20 == 0) config.Voronoi_Update = true;
 		vflag++;
 		
 		if( save.should_do(config.t) ) //save if asked

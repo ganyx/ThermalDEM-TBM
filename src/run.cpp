@@ -19,12 +19,8 @@ void Crun::init_evolve(void)
 	cout<<"Enter the path where to write the saving files (without final /)  and the first number of the file to be written"<<endl;
 	cin>>where_save.path>>where_save.current_file;
 	
-	where_save.check_path('w');		//check wheter the path already exist. If yes, stop.
+	where_save.check_path('w');		//check whether the path already exist. If yes, stop.
 	config.fprint(where_save);		// save the initial configuration, would stop if the files can't be opened
-	
-	//Cell boundary input
-//	if(BRANCH=="LIB")
-//        get_secure("Enter the type of boundary","WALL_INCLINED","PERIODIC_SHEAR","WALL_SHEAR",config.cell.boundary);
  
     // Converting to Keywords system
     config.cell.boundary = BOUNDARY;
@@ -39,13 +35,12 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
-    if(BOUNDARY != "PERIODIC_SHEAR"){ // no gravity component for PERIODIC_SHEAR
-    get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",config.cell.gravity);
+    if(BOUNDARY != "PERIODIC_SHEAR") // no gravity component for PERIODIC_SHEAR
+    {
+        get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",
+                   config.cell.gravity);
         get_secure("Enter the slope angle", "SLOPE",config.cell.slope);}
     
-    config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
-    config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
-    config.cell.g.x[2]= 0.0;
 	
 	string choice;
 	if(config.cell.boundary =="WALL_INCLINED") //input for inclined plane
@@ -54,8 +49,22 @@ void Crun::init_evolve(void)
 		config.cell.normal_stress_ext=0;
 		config.cell.normal_stress_control=false;
 		config.cell.Vdilat=0; config.cell.Adilat=0;
+        
+        config.cell.g.x[0]=  config.cell.gravity*sin(PI/180.0 * config.cell.slope );
+        config.cell.g.x[1]= -config.cell.gravity*cos(PI/180.0 * config.cell.slope );
+        config.cell.g.x[2]= 0.0;
 	}
-	
+    else if(config.cell.boundary =="PERIODIC_TILT") // input for tilting box
+    {
+        get_secure("The pressure at the given depth", "PRESSURE",
+                   config.cell.earth_pressure);
+        get_secure("The tilting angle speed", "TILT_SPEED",
+                   config.cell.tilt_speed);
+        config.cell.slope =0.0;
+        config.cell.normal_stress_control = true;
+        config.cell.shear_stress_control = true;
+        config.cell.Vdilat=0; config.cell.Adilat=0;
+    }
 	else
 	{//input for plane shear
 
@@ -69,7 +78,8 @@ void Crun::init_evolve(void)
 		
 		//get the normal stress or volume control;
 		get_secure("Do you want to control the normal stress or the volume",
-                   "NORMAL_STRESS","VOLUME", "STRAIN_RATE", "VIBRATION", choice);
+                   "NORMAL_STRESS","VOLUME", "STRAIN_RATE", "VIBRATION",
+                  choice);
 		if(choice=="NORMAL_STRESS"){
             config.cell.normal_stress_control=true; cin>>config.cell.normal_stress_ext;
         }
@@ -127,6 +137,9 @@ void Crun::init_evolve(void)
     config.parameter.volume_heating = 0.0;
     config.parameter.init_temperature *= 0.0;
     if(BRANCH=="TBM"){
+        get_secure("Enter the grain density","DENSITY",config.parameter.RHO);
+        get_secure("Enter the wall elastic modulus","WALL_E", config.parameter.wall_E);
+        get_secure("Enter the wall thermal conduction","WALL_CONDUCTIVITY",config.parameter.wall_conductivity);
         get_secure("Enter the conductivity of the gas phase","GAS_CONDUCTIVITY",config.parameter.gas_conductivity);
         get_secure("Eneter the max gap for gas phase conduction","MAX_GAP",config.parameter.max_gap);
         get_secure("Enter volumetric heating profile","HEATING",config.parameter.volume_heating);
@@ -160,13 +173,18 @@ void Crun::init_evolve(void)
 //    get_secure("Enter the slope angle", "SLOPE",config.cell.slope);
 	get_secure("Enter the MAX_SCAN_SATURATION", "MAX_SCAN", config.MAX_SCAN);
 	get_secure("Enter the MIN_SCAN_SATURATION", "MIN_SCAN", config.MIN_SCAN);
+        if(config.MIN_SCAN == config.MAX_SCAN) config.parameter.INITIAL_SATURATION = config.MAX_SCAN;
 	get_secure("Enter the SURFACE_TENSION", "SURFACE_TENSION", config.parameter.SURFACE_TENSION);
-//	get_secure("Enter the LIQUID_DIFFUSION", "LIQUID_DIFFUSION", config.parameter.LIQUID_DIFFUSION);
-	config.parameter.LIQUID_DIFFUSION = WATER_CONDUCTION_RATIO/config.parameter.SURFACE_TENSION;
+	get_secure("Enter the LIQUID_DIFFUSION", "LIQUID_DIFFUSION", config.parameter.LIQUID_DIFFUSION);
+//	config.parameter.LIQUID_DIFFUSION = WATER_CONDUCTION_RATIO/config.parameter.SURFACE_TENSION;
+    get_secure("Enter the CONTACT_ANGLE_MAX", "CONTACT_ANGLE_MAX", config.parameter.CONTACT_ANGLE_MAX);
+    get_secure("Enter the CONTACT_ANGLE_MIN", "CONTACT_ANGLE_MIN", config.parameter.CONTACT_ANGLE_MIN);
+        config.parameter.CONTACT_ANGLE_MAX *= PI/180.0;
+        config.parameter.CONTACT_ANGLE_MIN *= PI/180.0;
 	}
 	//End of parameter input
 		
-		
+    config.update_particle();	
 	//time_step
 	config.parameter.dimensionless_number(config.cell,config.P); //typical time scale and  dimensionless numbers
 	
@@ -192,8 +210,12 @@ void Crun::init_evolve(void)
 		sprintf(error," File run.cpp, function init_time(), simulation will not save configuration:\n tend = %.3f < save.next =%d",tend,save.next);
 	
 	config.Voronoi_Update = true;	
-	config.update_particle();
-//    config.update_wall();
+    config.init_wall();
+    if(BRANCH=="TBM") {
+        double initT = 50; // before operature, assumed system initial temperature
+        double dT = config.parameter.init_temperature.x[2] - initT;
+        for(int ip=0; ip<config.P.size();ip++) config.P[ip].expand_init(dT);
+    }
 	config.iterate(0.0);
 
 	cout<<"Initialisation of the parameter:\t SUCCESS"<<endl;  
@@ -264,8 +286,9 @@ if(LIQUID_TRANSFER)
 //			cout<<"Number of bonded contacts: "<<nc<<"\tNumber of melted particles: "<<np<<endl;
 
 if(LIQUID_TRANSFER)
-			cout<<"Number of wetted grains: "<<np<<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"
-			<<config.saturation<<endl;
+			cout<<"Number of wetted grains: "<<np
+                <<"\t Water Potential/Saturation: "<<config.cap_pressure<<"\t"<<config.saturation<<endl;
+            
 			
 if(config.simule_thermal_conduction){
     cout<<"System temperature: "<< config.parameter.average_temperature<<"\t"<<config.Wall[3].T<<"\t"<<config.Wall[4].T<<"\t"<<config.parameter.volume_heating<<endl;
@@ -286,8 +309,11 @@ if(config.simule_thermal_production){
 		file.open(his_file.c_str(), std::ios_base::app); 
 		file<<config.t<<"\t"<<config.cell.Xshift<<"\t"<<config.cell.L.x[1]<<"\t"
 		<<config.cell.stress.x[1][1]<<"\t"<<config.cell.stress.x[1][0]
-		<<"\t"<<config.cap_pressure_mid*1.0/config.parameter.SURFACE_TENSION<<"\t"<<config.saturation<<"\t"
-		<<config.cap_pressure*1.0/config.parameter.SURFACE_TENSION<<"\t"<<config.water_content<<endl; 
+            <<"\t"<<config.parameter.average_temperature
+//            <<"\t"<<config.cap_pressure_mid*1.0/config.parameter.SURFACE_TENSION
+            <<"\t"<<config.saturation
+            <<"\t"<<config.cap_pressure*1.0/config.parameter.SURFACE_TENSION
+            <<"\t"<<config.water_content<<endl;
 		file.close();
 		}
 	}

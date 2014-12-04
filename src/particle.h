@@ -63,6 +63,7 @@ public:
 	void predictor(double dt, double dt2_on_2);	/**< Integrate the velocity and the acceleration to get the new postion. \warning Depend on wether there is inertia or not.*/
 	void corrector(double dt_on_2,Ccell &); 	/**< Get the new velocity and acceleration \warning Only with inertia. */
 	void expand_radius(double dt);						/**<Expand the radius of a particle according to its temperature and its coef. of thermal expansion. */
+    void expand_init(double dT);     /**< initial thermal expansion R = R* e* dT */
 	friend ofstream &operator<<(ofstream &,Cparticle);		/**< Print the particle's data into a file.*/ 
 	friend ifstream & operator>>(ifstream &,Cparticle &);	/**< Read the particle's data from a file.  */ 
 	//bool operator == (Cparticle &);

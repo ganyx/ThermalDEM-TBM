@@ -11,12 +11,17 @@ public:
 	double VOL_polymer;				/**< volume fraction of polymer */
 	double MODULE_polymer;			/**< Elastic modulus of polymer layer */
 	double VISCO_polymer;			/**< Viscosity of polymer layer */
+    
+    double RHO;                     /**< Density of grains */
 
 	double specific_heat;           /**< Specific Heat of the bulk material (J/kg/K).*/
 	double bulk_conductivity;       /**< Bulk conductivity (W/m/K).*/
 	double thermal_expansion;		/**< Thermal expansion coefficient (1/K).*/
 	string GSD;						/**< Type of grains size distribution, can be FRACTALE or UNIFORM.*/
 	double fractal_dim;				/**< Fractal dimension power of the grains size distribution.*/
+    
+    double wall_conductivity;
+    double wall_E;
     
     double gas_conductivity;        /**< Gas conductivity (W/m/K).*/
     double max_gap;
@@ -52,8 +57,10 @@ public:
 	double SURFACE_TENSION;
 	double LIQUID_DIFFUSION;
 	double CONTACT_ANGLE;
+    double CONTACT_ANGLE_MAX;
+    double CONTACT_ANGLE_MIN;
 	
-	void dimensionless_number(Ccell &, std::vector <Cparticle> &); 
+	void dimensionless_number(Ccell &, std::vector <Cparticle> &);
 	friend ofstream &operator<<(ofstream &,Cparameter); 
 	friend ifstream & operator>>(ifstream &,Cparameter &);
 };

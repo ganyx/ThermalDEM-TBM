@@ -38,7 +38,7 @@ Ccontact::Ccontact(Cparticle *partA, Cparticle *partB, Ccell *c, Cparameter *par
 	Flag_Boundary=0;
 	water_volume=0.0;
 	dot_water_volume=0.0;
-	CONTACT_ANGLE = CONTACT_ANGLE_MIN;
+	CONTACT_ANGLE = parameter->CONTACT_ANGLE_MIN;
 }
 
 bool Ccontact::AM_I_CONTACTING()
@@ -68,7 +68,8 @@ bool Ccontact::AM_I_CONTACTING()
 			&& deltaN <= 0.2*min(pA->R, pB->R) && LIQUID_TRANSFER)  // NEED CHECK !!!
 			return true;
 	}
-	if((deltaN>=0 && deltaNB <= parameter->max_gap && !LIQUID_TRANSFER) // Solid contact without water
+//	if((deltaN>=0 && deltaNB <= parameter->max_gap && !LIQUID_TRANSFER) // Solid contact without water
+    if((deltaN>= parameter->max_gap && !LIQUID_TRANSFER) // Solid contact without water
 		|| (deltaN>=0 && deltaNB <= 0 && water_volume <= 1e-30) // non-existing capillary bridge
 		|| (water_volume>1e-30 && deltaN >= min(pow(water_volume,0.3333),MAX_CAP_LENGTH) ) ) // existing capillary bridge, rupture
 		return false; //there is no contact, and no pre-existing bond, and no capilary force (YG)
@@ -179,14 +180,14 @@ if(LIQUID_TRANSFER){
 //	if(dwater < 0.0)	 dwater = -1.0; 	// DRAINAGE LIMIT, MIN CONTACT ANGLE
 	
 	CONTACT_ANGLE += dwater * KTHETA; 	
-	if(CONTACT_ANGLE > CONTACT_ANGLE_MAX) CONTACT_ANGLE = CONTACT_ANGLE_MAX;
-	if(CONTACT_ANGLE < CONTACT_ANGLE_MIN) CONTACT_ANGLE = CONTACT_ANGLE_MIN;
+	if(CONTACT_ANGLE > parameter->CONTACT_ANGLE_MAX) CONTACT_ANGLE = parameter->CONTACT_ANGLE_MAX;
+	if(CONTACT_ANGLE < parameter->CONTACT_ANGLE_MIN) CONTACT_ANGLE = parameter->CONTACT_ANGLE_MIN;
 	
 // For cases with almost full-saturated state: Contact angle is the maximum value.
 //	if(pA->saturation >= MAX_SATURATION_AIR || pB->saturation >= MAX_SATURATION_AIR) 
 //		CONTACT_ANGLE = CONTACT_ANGLE_MAX;
 	
-	if(dt == 0) CONTACT_ANGLE = CONTACT_ANGLE_MIN; //exp
+	if(dt == 0) CONTACT_ANGLE = parameter->CONTACT_ANGLE_MIN; //exp
 	}
 // ????? BUG
 //	a = sqrt(2*Reff*fabs(deltaN)); // PR's implementation
@@ -225,7 +226,8 @@ if(LIQUID_TRANSFER){
 //	Fn = nA*(deltaNS*E*aS - deltaNB*E*aB);				//normal force, imp. before 15.11.2010
 	fnold = fn; //renember the old value of normal force norm
 	fn = 4.0/3.0 * deltaNS*E*aS;     //Hertz contact
-	Fn = nA*(fn + fcap);						//normal force
+	Fn = nA*(fn + fcap);						//  normal force
+    FnEff = nA*(fn);						//  effective normal force
 	Ft += (uDotT*E* ct *aS*dt)  + (OmeMean^Ft)*dt; 		//increment norm and rotation for tangential force
 	Gn += (dOmeN*E*aS*aS*aS*dt) + (OmeMean^Gn)*dt ; 	//rolling moment cr is the numerical constant, dimensionless, for the rolling and twist 
 	Gt += (dOmeT*E*aS*aS*aS*dt) + (OmeMean^Gt)*dt ;		//twist moment
@@ -299,6 +301,7 @@ if(LIQUID_TRANSFER){
 	Fela=Fn+Ft;
 
 	F = Fela+Fvis;	//sum of force
+    FEff = FnEff + Ft + Fvis; // sun of effective force.
 	G = Gn+Gt;		//sum of moments
 
 	//mechanical dissipation
@@ -338,7 +341,11 @@ void Ccontact::EVALE_heat_flow()
 
 double  Ccontact::conductance() // for calculation of dimensionless conductance between particles
 {
-    ALPHA = parameter->bulk_conductivity / parameter->gas_conductivity;
+    double meanT = (pA->T + pB->T)/2.0 + 273.0;
+    double initT = parameter->init_temperature.x[2] + 273.0;
+    
+    ALPHA = conductivity / (parameter->gas_conductivity * pow(meanT/initT,0.71) ); // HELIUM CONDUCTION WITH TEMPERATURE
+//  ALPHA = conductivity / parameter->gas_conductivity;
     
 	BETA = ALPHA * a /(2.0*Reff);
 	double H0 = 2.0*log(ALPHA)-3.9;
@@ -376,7 +383,7 @@ void Ccontact::set_me_in_main_cell()
 	cell->rescale(dX.x[0],cell->L.x[0]);//check if out fron the right/left sides
 	cell->rescale(dX.x[2],cell->L.x[2]);//check if out fron the front/back sides	
 	
-	if(cell->boundary=="PERIODIC_SHEAR")	//specificity of PERIODIC_SHEAR
+	if(cell->boundary=="PERIODIC_SHEAR" || cell->boundary=="PERIODIC_TILT")	//specificity of PERIODIC_SHEAR
 	{
 		if (dX.x[1]>=cell->L.x[1]/2.)		//out fron the top side
 			{
@@ -426,6 +433,16 @@ void Ccontact::set_me_in_main_cell()
 	file<<endl;
 	return file;
 	}
+ else if(BRANCH=="TBM"){
+     file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
+     file<<c.Ft<<c.Gn<<c.Gt;
+     file<<c.fn<<"\t";
+     file<<c.age<<"\t";
+     file<<c.phi<<"\t";
+     file<<c.phi_solid<<"\t";
+     file<<endl;
+     return file;
+ }
  else{
  	file<<c.A<<"\t"<<c.B<<"\t"; //c 1-2
 	file<<c.Ft<<c.Gn<<c.Gt;

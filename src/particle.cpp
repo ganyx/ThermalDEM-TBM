@@ -35,6 +35,7 @@ void  Cparticle::PRINT()
 
 void Cparticle::expand_radius(double dt){R += e*R*Tdot*dt; RHO = m /(4.0/3.0 *PI *R*R*R);}
 
+void Cparticle::expand_init(double dT){R += e*R*dT; RHO = m /(4.0/3.0 *PI *R*R*R);}
  
 void Cparticle::predictor(double dt,double dt2_on_2)
 {
@@ -156,6 +157,7 @@ void Cparticle::set_me_in_main_cell(Ccell &cell)
 	cell.rescale(X.x[2],cell.L.x[2]);//check if out fron the front/back sides	
 		
 	if(cell.boundary=="PERIODIC_SHEAR"	//specificity of PERIODIC_SHEAR
+       || cell.boundary=="PERIODIC_TILT"
        || BRANCH == "CREATE")           // OR create sample stage for all type of Boundary conditions
 	{
 		if (X.x[1]>=cell.L.x[1]/2.)		//out fron the top side
@@ -299,7 +301,7 @@ ofstream & operator<<(ofstream &file,Cparticle p)
     else if(BRANCH=="TBM")
         file<<p.T<<"\t"<<p.water_volume; //scalar
     else
-    file<<p.T<<"\t"<<p.water_volume; //scalar
+    file<<p.saturation<<"\t"<<p.water_volume; //scalar
 
     file<<endl;	//new line
  	return file;

@@ -30,8 +30,8 @@ using namespace std; // for a easier use of cin and cout
 #define MESH_SIZE 2.0  	/**< ratio of mesh size and the maximum particle diameter */
 #define INIT_BOND 0
 #define BOND_STRENGTH 20.0
-#define SHEAR_LIMIT 0.5
-#define DILAT_LIMIT 0.0
+#define SHEAR_LIMIT 0.05
+#define DILAT_LIMIT 0.001
 #define WALL_KD	5e-4
 #define WALL_DAMP 0.001
 #define GLOBAL_DAMPING	1.0
@@ -52,8 +52,8 @@ bool LIQUID_TRANSFER;
 #define MAX_DWATER 0.05 // limit the max rate of water transport per contact
 #define WATER_CONDUCTION_RATIO	0.05
 
-#define CONTACT_ANGLE_MAX 	60.0/180.0*PI // PI/3.0
-#define CONTACT_ANGLE_MIN 	5.0/180.0*PI // PI/18.0
+//#define CONTACT_ANGLE_MAX 	60.0/180.0*PI // PI/3.0
+//#define CONTACT_ANGLE_MIN 	5.0/180.0*PI // PI/18.0
 #define INLET_OUTLET_PRESSURE	0.01	// Water inlet/outlet rate
 #define WETTING_RATE	0.0005
 

@@ -35,6 +35,7 @@ class Cconfig
 	void iterate(double);			/**< Make the configuration evolve over a time step dt. */
 	void update_particle();
     void update_wall();
+    void init_wall();
 
 	void create_random();		/**< Create a new random config. */
 	void set_wall_grain(int, int);/**< Set the grain of the walls as well as the planes if any. */

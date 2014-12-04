@@ -39,6 +39,10 @@ Ccell::Ccell()//initialisation
 	normal_stress_control=false;
 	shear_stress_control=false;
 	gradT_control=false;
+    
+    earth_pressure = 0.0;
+    tilt_speed = 0.0;
+    tilt_angle = 0.0;
 
 	energy_kinetic=0.0;
 	production=0.0;
@@ -49,6 +53,12 @@ Ccell::Ccell()//initialisation
 void Ccell::predictor(double dt,double dt2_on_2)
 {
 	if(boundary=="WALL_INCLINED")return;//nothing to do
+    
+    if(boundary == "PERIODIC_TILT"){
+        slope += tilt_speed *dt;
+        normal_stress_ext = earth_pressure * cos(PI/180.0 * slope );
+        shear_stress_ext = earth_pressure * sin(PI/180.0 * slope );
+    }
     
 	if(normal_strain_control){
 		Yshift = Vdilat*dt;
@@ -136,13 +146,14 @@ void Ccell::corrector(double dt_on_2)
 	mass= 1.0;
 	//normal_stress_int shear_stress_int  
 	
-/*	// YG code start
+	// YG code start
 	double Tint=1.0, Tder=1.e-5, Estar=1000;
 	double dstress_p, dstrain;
 	dstress_p = dstress;
 	dstress = (-normal_stress_ext-normal_stress_in);
+    double dt = dt_on_2 *2.0;
 	// YG code end
-*/
+
 	
 	if(normal_stress_control)//if the normal stress is controled
 	{
@@ -153,14 +164,14 @@ void Ccell::corrector(double dt_on_2)
 		if( Vdilat < -DILAT_LIMIT*L.x[1]) Vdilat= -DILAT_LIMIT*L.x[1]; //limit cell velocity
 		else if(Vdilat >  DILAT_LIMIT*L.x[1]) Vdilat=  DILAT_LIMIT*L.x[1]; //limit cell velocity
 		
-		// YG PID controller simplified version
-/*		dstrain = 1.0/Estar *dstress;				// Proportional part
+/*		// YG PID controller simplified version
+		dstrain = 1.0/Estar *dstress;				// Proportional part
 		dstrain_int += dt*dstress/(Estar*Tint);		// Integral part
 		dstrain += dstrain_int;
 		dstrain += Tder*(dstress-dstress_p)/(Estar*dt);	// Derivative part
 		Vdilat = dstrain/dt *L.x[1];
-		if( Vdilat < -0.025*L.x[1]) Vdilat= -0.025*L.x[1]; //limit cell velocity
-		else if(Vdilat >  0.025*L.x[1]) Vdilat=  0.025*L.x[1]; //limit cell velocity
+		if( Vdilat < -DILAT_LIMIT*L.x[1]) Vdilat=-DILAT_LIMIT*L.x[1]; //limit cell velocity
+		else if(Vdilat >  DILAT_LIMIT*L.x[1]) Vdilat=  DILAT_LIMIT*L.x[1]; //limit cell velocity
 		// YG PID controller simplified version, end
 */
 	}
@@ -190,7 +201,7 @@ void Ccell::rescale(Cvector &X)
 	rescale(X.x[0],L.x[0]);//check if out fron the right/left sides
 	rescale(X.x[2],L.x[2]);//check if out fron the front/back sides
 	
-	if(boundary=="PERIODIC_SHEAR")	//specificity of PERIODIC_SHEAR
+	if(boundary=="PERIODIC_SHEAR" || boundary=="PERIODIC_TILT")	//specificity of PERIODIC_SHEAR
 	{
 		if (X.x[1]>=L.x[1]/2.)		//out fron the top side
 			{
@@ -230,12 +241,14 @@ if(boundary=="WALL_INCLINED")
 
 if(boundary=="PERIODIC_SHEAR") cout<<"\tPlane shear without wall: x,y and z directions are periodic"<<endl;	
 if(boundary=="WALL_SHEAR") cout<<"\tShear with wall: bottom and top walls, x and z directions are periodic"<<endl;
+if(boundary=="PERIODIC_TILT") cout<<"\tPeriodic tilt: x y and z directions are periodic. Tilt angle:\t"<<slope<<endl;
 
-if(normal_stress_control) cout<<"\tNormal stress is controlled:\t"<<normal_stress_ext<<endl;	
+if(normal_stress_control) cout<<"\tNormal stress is controlled:\t"<<normal_stress_ext<<endl;
 else	cout<<"\tNormal stress is not controlled: constant volume"<<endl;
 if(shear_stress_control)cout<<"\tShear stress is controlled:\t"<<shear_stress_ext<<endl;	
 else cout<<"\tShear rate is controlled:\t"<<shear_rate<<endl;	
 cout<<"\tNormal/Shear stress inside:\t"<<normal_stress_in<<"/"<<shear_stress_in<<endl;
+    cout<<"\tEffective stress inside:\t"<<stressEff.x[1][1]<<"/"<<stressEff.x[0][1]<<endl;
     
     if(boundary == "BALL_BOX_Y"){
         cout<<"\tNormal/Shear stress bottom:\t"<<normal_stress_bottom<<"/"<<shear_stress_bottom<<endl;

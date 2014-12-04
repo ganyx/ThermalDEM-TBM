@@ -51,8 +51,12 @@ class Ccell
 	bool normal_stress_control, shear_stress_control, gradT_control;
 	bool normal_strain_control;
     bool vibration_control;
+    
+    double earth_pressure;  /**< Earth pressure for "PERODIC_TILT" */
+    double tilt_speed;      /**< Tilting speed for "PERODIC_TILT" */
+    double tilt_angle;      /**< Tilt angle for "PERODIC_TILT" */
 
-	Cmatrix stress;
+	Cmatrix stress, stressEff;
 
 	Cmatrix K; 		/**< Effective conductivity of the sample>*/
 	Cmatrix H; 		/**< Effective convectivity of the sample>*/

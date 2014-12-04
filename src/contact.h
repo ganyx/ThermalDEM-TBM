@@ -37,6 +37,7 @@ class Ccontact
 	
 	Cvector F; 				/**< Contact force*/
 	Cvector Fn, Ft,Fvis,Fela;
+    Cvector FnEff, FEff;
 		
 	Cvector G,Gn,Gt;
 	double fn,ft,gn,gt,fvis;

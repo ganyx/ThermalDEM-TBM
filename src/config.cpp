@@ -48,6 +48,7 @@ void Cconfig::iterate(double time_step)
 // Velocity offset by rigid motion
 //#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
     if(cell.boundary == "PERIODIC_SHEAR" ||
+       cell.boundary == "PERIODIC_TILT" ||
        cell.boundary == "PERIODOC_BOX" ||
        cell.boundary == "PERIODOC_BOX_XYZ")
         {for(int ip=0; ip< P.size(); ip++)
@@ -223,7 +224,9 @@ void  Cconfig::sum_heat()
 
 void Cconfig::sum_force()
 {
- 	Cmatrix stress;
+ 	Cmatrix stress, stressEff;
+    
+ //   stress *= 0; stressEff *= 0;
 
 	Cvector g = cell.g;
 	
@@ -256,6 +259,7 @@ void Cconfig::sum_force()
 		dx = C[ic].dX;
 
 		stress+=   (C[ic].F| dx);
+        stressEff +=   (C[ic].FEff| dx); // Effective stress
 	}
 
 if(LIQUID_TRANSFER){	
@@ -272,12 +276,17 @@ if(LIQUID_TRANSFER){
 	}
 	
 	if(PSEUDO_2D)	stress/=(cell.L.x[0]*cell.L.x[1]);  
-	else	stress/=(cell.L.x[0]*cell.L.x[1]*cell.L.x[2]);  
+	else	stress/=(cell.L.x[0]*cell.L.x[1]*cell.L.x[2]);
+    
+    if(PSEUDO_2D)	stressEff /=(cell.L.x[0]*cell.L.x[1]);
+    else	stressEff /=(cell.L.x[0]*cell.L.x[1]*cell.L.x[2]);
 	
 	//cell.stress = stress.symetric();  
 	cell.stress =stress;
+    cell.stressEff =stressEff;
+    
     cell.normal_stress_in = stress.x[1][1];
-	cell.shear_stress_in = stress.x[1][1];
+	cell.shear_stress_in = stress.x[0][1];
 	
 	if(cell.boundary!="WALL_INCLINED" && cell.boundary != "BALL_BOX_Y") return;
     
@@ -375,6 +384,7 @@ if(Voronoi_Update){
 
     
     if(cell.boundary == "PERIODIC_SHEAR" ||
+       cell.boundary == "PERIODIC_TILT" ||
        cell.boundary == "PERIODOC_BOX" ||
        cell.boundary == "PERIODOC_BOX_XYZ" ||
        cell.boundary == "BALL_BOX" ||
@@ -586,8 +596,11 @@ void Cconfig::fread(Cin_out where_to_read)
 			C[ic].parameter = &parameter;
 			P[C[ic].A].contact.push_back(&C[ic]);
 			if(INIT_BOND != 0) C[ic].deltaNB = INIT_BOND;
-		} 
-
+		}
+    
+    parameter.RHO = 1.0; // NOTE, this is a default vaule, can be changed later.
+    parameter.VOL_polymer = 0.0;
+    
 	update_particle();
 	parameter.dimensionless_number(cell,P);	
 	iterate(0.0);//use here to recover all the data that haven't been saved, but which derive from saved data
@@ -693,7 +706,9 @@ void  Cconfig::liquid_transfer(){
 			Cparticle *ptop, *pbottom;
 
 //			double Gravity = 2.0e-3;
-			if(fabs(C[ic].pA->X.x[1] - C[ic].pB->X.x[1])<10.0){
+			if(fabs(C[ic].pA->X.x[1] - C[ic].pB->X.x[1]) < cell.L.x[1]/2.0
+               && MAX_SCAN > MIN_SCAN  // drainage-wetting cycles
+               ){
 				flag_boundary = false;
 //				pa_ave = C[ic].pA->water_pressure + GRAVITY * C[ic].pA->X.x[1];
 //				pb_ave = C[ic].pB->water_pressure + GRAVITY * C[ic].pB->X.x[1];
@@ -701,6 +716,7 @@ void  Cconfig::liquid_transfer(){
 				pb_ave = C[ic].pB->water_pressure - cell.g * C[ic].pB->X;
 			}
 			else{ // no water tranport cross X.x[1] boundary
+                // while having drainage-wetting cycles
 				flag_boundary = true;
 				if(C[ic].pA->X.x[1] > 0) { ptop = C[ic].pA; pbottom = C[ic].pB;}
 				if(C[ic].pA->X.x[1] < 0) { ptop = C[ic].pB; pbottom = C[ic].pA;}
