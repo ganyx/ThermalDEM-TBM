@@ -35,6 +35,16 @@ void Crun::init_evolve(void)
     config.cell.g.x[1]= 0.0;
     config.cell.g.x[2]= 0.0;
     
+    if(BOUNDARY == "HOLLOW_CYLINDER")
+    {
+        get_secure("Enter the Hollow Cylinder Geometry (HEIGHT)", "HEIGHT",config.cell.Height);
+        get_secure("Enter the Hollow Cylinder Geometry (R External)", "REXTERNAL",config.cell.Rexternal);
+        get_secure("Enter the Hollow Cylinder Geometry (R Internal)", "RINTERNAL",config.cell.Rinternal);
+        config.cell.L.x[0] = 2*config.cell.Rexternal; // redefine Cell geometry with HOLLOW_CYLINDER KEYWORDS
+        config.cell.L.x[1] = config.cell.Height;
+        config.cell.L.x[2] = 2*config.cell.Rexternal;
+    }
+    
     if(BOUNDARY != "PERIODIC_SHEAR") // no gravity component for PERIODIC_SHEAR
     {
         get_secure("Enter the gravity (if no gravity, input 0)","GRAVITY",
@@ -75,6 +85,8 @@ void Crun::init_evolve(void)
         config.cell.cell_vibration_freq = 0.0;
         config.cell.cell_velocity *= 0.0;
         config.cell.vibration_control =false;
+        
+        config.cell.g.x[1]= -config.cell.gravity; // Gravitational force
 		
 		//get the normal stress or volume control;
 		get_secure("Do you want to control the normal stress or the volume",
@@ -97,6 +109,8 @@ void Crun::init_evolve(void)
             get_secure("Vibration frequency, dX = A sin(2 pi freq t)", "FREQUENCY", config.cell.cell_vibration_freq);
             get_secure("Vibration amplitude, dX = A sin(2 pi freq t)", "AMPLITUDE", config.cell.cell_vibration_amplitude);
         }
+        
+        if(BOUNDARY=="HOLLOW_CYLINDER") get_secure("Enter the wall elastic modulus","WALL_E", config.parameter.wall_E);
 	
 		//get the shear stress or shear rate control;
 		get_secure("Do you want to control the shear stress or the shear rate",
@@ -246,7 +260,7 @@ for(config.t=tstart;config.t<tend;config.t+=dt)   //start time loop
 		config.iterate(dt); // make a evolution of configuration over a time step dt, with or without refreshing the neighbours
 		
 		config.Voronoi_Update = false;
-		if(vflag%50 == 0) config.Voronoi_Update = true;
+		if(vflag%20 == 0) config.Voronoi_Update = true;
 		vflag++;
 		
 		if( save.should_do(config.t) ) //save if asked

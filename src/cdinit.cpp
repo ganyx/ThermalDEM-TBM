@@ -5,6 +5,14 @@ void  Cconfig::update_particle()
 	
 	for(int ip=0;ip<P.size();ip++)
 	{
+        if(BRANCH!="LIB")  {
+            P[ip].Tm = 21.0;
+            P[ip].Lm = 5.0;
+            P[ip].k = parameter.bulk_conductivity;
+            P[ip].E = parameter.MODULE_N;
+        }
+        
+        if(BRANCH=="LIB") {
 		if(ip<parameter.COMP_FRACTION){ // Spiece-1: Biotite
 				P[ip].Tm = 21.0;
 				P[ip].Lm = 5.0;
@@ -15,8 +23,9 @@ void  Cconfig::update_particle()
 			P[ip].Tm = 25.0;
 			P[ip].Lm = 3.0;
 			P[ip].k = 5.0*parameter.bulk_conductivity;
-			P[ip].E = parameter.MODULE_N / 10.0;
-		}
+			P[ip].E = parameter.MODULE_N;
+		}}
+        
 		P[ip].m = 4./3. * PI * pow(P[ip].R,3)*parameter.RHO;
 		P[ip].c = parameter.specific_heat;
 //		P[ip].k = parameter.bulk_conductivity;
@@ -43,6 +52,7 @@ void Cconfig::update_wall()
     
     if(cell.boundary=="WALL_BOX_Y"
        || cell.boundary=="BALL_BOX_Y"
+       || cell.boundary=="HOLLOW_CYLINDER"
 )
     {
         wtemp.R = INFINITE;
@@ -77,6 +87,26 @@ void Cconfig::update_wall()
         
         wtemp.id = -5; Wall.push_back(wtemp);
         wtemp.id = -6; Wall.push_back(wtemp);
+        
+        if(cell.boundary=="HOLLOW_CYLINDER"){
+            wtemp.id = -7;
+            wtemp.X.x[0] = cell.Rexternal;
+            wtemp.X.x[1] = 0.0;
+            wtemp.X.x[2] = 0.0;
+            wtemp.nw.x[0] = -1.0;
+            wtemp.nw.x[1] = 0.0;
+            wtemp.nw.x[2] = 0.0;
+            Wall.push_back(wtemp);// External cylinder wall
+            
+            wtemp.id = -8;
+            wtemp.X.x[0] = cell.Rinternal;
+            wtemp.X.x[1] = 0.0;
+            wtemp.X.x[2] = 0.0;
+            wtemp.nw.x[0] = 1.0;
+            wtemp.nw.x[1] = 0.0;
+            wtemp.nw.x[2] = 0.0;
+            Wall.push_back(wtemp); // Internal cylinder wall
+        }
     }
 }
 
@@ -125,7 +155,17 @@ void Cconfig::create_random()
 		get_secure("Enter the number of grains of the top wall  (>=1), including the plan (it counts as one grain)", "NPART_WALL_TOP",Npart_wall_top);	
 		if(Npart_wall_bottom<1 || Npart_wall_top<1){serror="The number of grains on the wall must be >=1";STOP("cdinit.cpp", "create_random()",serror);}
 	}
-	
+    
+    if(BOUNDARY == "HOLLOW_CYLINDER")
+    {
+        get_secure("Enter the Hollow Cylinder Geometry (HEIGHT)", "HEIGHT",cell.Height);
+        get_secure("Enter the Hollow Cylinder Geometry (R External)", "REXTERNAL",cell.Rexternal);
+        get_secure("Enter the Hollow Cylinder Geometry (R Internal)", "RINTERNAL",cell.Rinternal);
+    cell.L.x[0]=2*cell.Rexternal; // redefine Cell geometry with HOLLOW_CYLINDER KEYWORDS
+    cell.L.x[1]=cell.Height;
+    cell.L.x[2]=2*cell.Rexternal;
+    }
+
 
 	get_secure("Enter the number of compositions", "COMPOSITION", parameter.COMPOSITION);
 	if(parameter.COMPOSITION<1) parameter.COMPOSITION=1;
@@ -164,11 +204,13 @@ void Cconfig::create_random()
 		}
 	cout<<"A high initial packing factor may result in residual stresses after the packing stage."<<endl;
 	
+    if(BOUNDARY != "HOLLOW_CYLINDER"){
 	// adjusting cell.L.x[1] for initial packing: fix box size, and expansion of grains.
 	double volume=0.0;
 	for(int ip=0;ip<radius.size();ip++) volume += pow(radius[ip],3.0);
 	cell.L.x[2] = volume *4.0*PI/3.0 / packing /(cell.L.x[0]*cell.L.x[1]);
-	cout<<"Adjusted cell depth for the initial packing\t"<<cell.L.x[2]<<endl;
+        cout<<"Adjusted cell depth for the initial packing\t"<<cell.L.x[2]<<endl;
+    }
 
 	set_random_grain(Npart_flow, radius); 
 
@@ -315,7 +357,9 @@ void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
         
         Cvector offset;
         offset *= 0.0;
-        if(cell.boundary == "WALL_BOX_Y") offset.x[1]= parameter.Dmax/2.0/R_SCALE_FACTOR;
+        if(cell.boundary == "WALL_BOX_Y"
+           || cell.boundary == "HOLLOW_CYLINDER")
+            offset.x[1]= parameter.Dmax/2.0/R_SCALE_FACTOR;
 
 		do
 			{
@@ -324,7 +368,18 @@ void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
 			for(int i=0;i<DIM;i++)
                 P[P.size()-1].X.x[i]=UNIFORM_RANDOM_DOUBLE(-cell.L.x[i]/2. + offset.x[i], cell.L.x[i]/2. - offset.x[i]);
 			if(PSEUDO_2D) P[P.size()-1].X.x[2]=0.; // if we are in 2D, this component of position is zero
-
+                
+            // Hollow Cylinder boundary ONLY (Date: 05-02-2016).
+            //
+            if(cell.boundary == "HOLLOW_CYLINDER")
+                {
+                    double Rsqrt = sqrt(pow(P[P.size()-1].X.x[0], 2.0) + pow(P[P.size()-1].X.x[2], 2.0));
+                    
+                    if( Rsqrt >= cell.Rexternal - offset.x[1] || Rsqrt <= cell.Rinternal + offset.x[1])
+                    {P[P.size()-1].remove_from_box();
+                        position_occupied=true;}
+                    }
+            if(!position_occupied)                
             for(int in=0; in<P.size()-1;in++)
 				{
                     Ccontact cont(&P[P.size()-1], &P[in], &cell, &parameter);
@@ -344,6 +399,8 @@ void Cconfig::set_random_grain(int Nf, std::vector <double> &radius)
 double frac_sol = 0;
 for(int p1 = 0;p1<P.size()-1;p1++) frac_sol+=4./3.*PI*pow(P[p1].R,3.);
 frac_sol/=(cell.L.x[0]*cell.L.x[1]*cell.L.x[2]);
+if(cell.boundary == "HOLLOW_CYLINDER")
+    frac_sol/= cell.Height*PI*(cell.Rexternal*cell.Rexternal-cell.Rinternal*cell.Rinternal);
 cout<<"Actual solid fraction:\t"<<frac_sol <<endl;
 
 /*

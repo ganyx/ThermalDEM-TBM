@@ -8,9 +8,9 @@ void Cconfig::iterate(double time_step)
 	dt2_on_2=dt*dt/2.;
 	
 	predictor();			//motion integration
-	
+
 	update_contact();		//find contact and get the force and torque
-	sum_force(); 			//sum the force moment of each contact on particle   
+	sum_force(); 			//sum the force moment of each contact on particle
 	if(simule_thermal_conduction) sum_heat(); 					//Heat transfer 
 	
 	if(LIQUID_TRANSFER) liquid_transfer();
@@ -160,7 +160,9 @@ void Cconfig::corrector()
     for(int ip=0; ip< P.size();ip++)	
         P[ip].corrector(dt_on_2,cell);
     
-    if((BOUNDARY == "WALL_BOX_Y" || BOUNDARY == "BALL_BOX_Y") && cell.vibration_control){
+    if((BOUNDARY == "WALL_BOX_Y" ||
+        BOUNDARY == "BALL_BOX_Y" ||
+        BOUNDARY == "HOLLOW_CYLINDER" ) && cell.vibration_control){
         Wall[3].X += cell.cell_offset; Wall[3].V = cell.cell_velocity;
         Wall[4].X += cell.cell_offset; Wall[3].V = cell.cell_velocity;
     }
@@ -326,7 +328,7 @@ void Cconfig::update_contact()
 {
 	renew_contact_list();
 
-#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI 
+#pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
 	for(int ic=0;ic<C.size();ic++)
 	{
 		C[ic].EVALE_Geo();
@@ -370,7 +372,6 @@ if(Voronoi_Update){
     for( int ip=0;ip<P.size();ip++){
 		con.put(ip,P[ip].X.x[0],P[ip].X.x[1],P[ip].X.x[2],P[ip].R);
     }
-    
 	for(int ijk=0; ijk < nx*ny*nz; ijk++){
 		for(int q=0;q<con.co[ijk];q++){
 			con.compute_cell(vcell,ijk,q);
@@ -410,6 +411,44 @@ if(Voronoi_Update){
 			P[ivp].voronoi_volume = vcell.volume();
 		}}
 	}
+    
+    
+    if(cell.boundary == "HOLLOW_CYLINDER") // Hollow Cylinder boundary ONLY (Date: 05-02-2016).
+    {
+        container_poly con(-cell.L.x[0]/2.0,cell.L.x[0]/2.0,
+                      -cell.L.x[1]/2.0,cell.L.x[1]/2.0,
+                      -cell.L.x[2]/2.0,cell.L.x[2]/2.0,
+                      nx,ny,nz,true,false,true,8);
+        // w_id = -1 to -6
+
+        wall_cylinder cyl(0,0,0,    // a point on the axis of the cylinder.
+                          0,1,0,    // a point on the axis of the cylinder.
+                          cell.Rexternal, -7);       // the radius of the cylinder.
+        con.add_wall(cyl);
+        // w_id = -7
+        wall_cylinder cyl0(0,0,0,    // a point on the axis of the cylinder.
+                          0,1,0,    // a point on the axis of the cylinder.
+                          cell.Rinternal, -8);       // the radius of the cylinder.
+        con.add_wall(cyl0);
+        // w_id = -8, in Voro++ default w_id = -99
+
+        for( int ip=0;ip<P.size();ip++){
+            con.put(ip,P[ip].X.x[0],P[ip].X.x[1],P[ip].X.x[2],P[ip].R);
+        }
+        
+        for(int ijk=0; ijk < nx*ny*nz; ijk++){
+            for(int q=0;q<con.co[ijk];q++){
+                con.compute_cell(vcell,ijk,q);
+                int ivp=con.id[ijk][q];
+                vcell.neighbors(P[ivp].v_neighbors);
+                vcell.face_areas(P[ivp].v_face_areas);
+                P[ivp].num_neighbors = P[ivp].v_neighbors.size();
+                P[ivp].voronoi_volume = vcell.volume();
+            }}
+        
+    }
+
+    
 }
 	
 #pragma omp parallel for num_threads(NTHREADS)	// YG, MPI
@@ -435,7 +474,7 @@ if(Voronoi_Update){
 	bool exist_contact;
 	Ccontact cont;
 
-//#pragma omp parallel for private(in, c, exist_contact,cont, tid, pid) schedule(dynamic) num_threads(NTHREADS)	// YG, MPI testing
+//#pragma omp parallel for private(in, c, exist_contact,cont, cont0, tid, pid) schedule(dynamic) num_threads(NTHREADS)	// YG, MPI testing
 	for(ip=0;ip<P.size();ip++)	// Problem with this loop!! Inverse the loop, different results!!
 		{
         if(P[ip].AM_I_BOUNDARY==0) // Only grain inside the compute domain
@@ -458,7 +497,7 @@ if(Voronoi_Update){
                             }//check if the contact exists
                         }
                     
-                        if(P[ip].v_neighbors[in] < 0){
+                        if(P[ip].v_neighbors[in] < 0 && P[ip].v_neighbors[in] >= -6){
                             if(P[ip].contact[c]->pB == &Wall[-P[ip].v_neighbors[in]]
                                || P[ip].contact[c]->pA == &Wall[-P[ip].v_neighbors[in]] )
                             {
@@ -467,7 +506,22 @@ if(Voronoi_Update){
                                     // update the voronoi_area, even for existing contacts.
                                 break;
                             }//check if the contact exists
-                        }}
+                        }
+                        
+                        if((cell.boundary == "HOLLOW_CYLINDER")
+                           && P[ip].v_neighbors[in] < -6) {
+                            if(P[ip].contact[c]->pB == &Wall[7]
+                               || P[ip].contact[c]->pA == &Wall[7]
+                               || P[ip].contact[c]->pB == &Wall[8]
+                               || P[ip].contact[c]->pA == &Wall[8])
+                            {
+                                exist_contact= true;
+                                P[ip].contact[c]->voronoi_area = P[ip].v_face_areas[in];
+                                // update the voronoi_area, even for existing contacts.
+                                break;
+                            }//check if the contact exists
+                        }
+                        }
 
 				if(!exist_contact)//if not, create a new contact
 				{
@@ -476,7 +530,8 @@ if(Voronoi_Update){
                     if(P[ip].v_neighbors[in] < 0)
                     { // contact between particles and walls
                         if((cell.boundary == "WALL_BOX_Y"
-                            || cell.boundary == "BALL_BOX_Y")
+                            || cell.boundary == "BALL_BOX_Y"
+                            || cell.boundary == "HOLLOW_CYLINDER")
                             && (P[ip].v_neighbors[in] == -3 || P[ip].v_neighbors[in] == -4)){
                             // the grain is close to the wall region
                             // wall ID -1 to -6 corresponding to xmin, xmax, ymin, ymax, zmin, zmax
@@ -485,6 +540,27 @@ if(Voronoi_Update){
                                 cont.voronoi_area = P[ip].v_face_areas[in];
                                 CThread[tid].push_back(cont);
                             }}
+                        
+                        // Hollow Cylinder boundary ONLY (Date: 05-02-2016).
+                            if((cell.boundary == "HOLLOW_CYLINDER")
+                               && P[ip].v_neighbors[in] < -6){
+                                // Use solution without the Voronoi tesselation.
+                                Ccontact cont(&P[ip], &Wall[7], &cell, &parameter);
+                                if( cont.AM_I_CONTACTING() ) {
+                                    cont.voronoi_area = P[ip].v_face_areas[in];
+                                    CThread[tid].push_back(cont);
+                                }
+                                
+                                Ccontact cont0(&P[ip], &Wall[8], &cell, &parameter);
+                                if(cell.Rinternal > 0.0){ // If internal radius is none-zero (hollow cylinder)
+                                if( cont0.AM_I_CONTACTING() ) {
+                                    cont0.voronoi_area = P[ip].v_face_areas[in];
+                                    CThread[tid].push_back(cont0);
+                                }}
+                            }
+                        //
+                        //
+                        //
                     }
                     
                     if(P[ip].v_neighbors[in] >= 0){
@@ -534,7 +610,7 @@ if(Voronoi_Update){
 
 
  void Cconfig::energy(void)
-{ }
+    { return;}
 
 void Cconfig::fread(Cin_out where_to_read)
 {

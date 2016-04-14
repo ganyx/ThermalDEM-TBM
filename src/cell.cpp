@@ -38,7 +38,10 @@ Ccell::Ccell()//initialisation
 
 	normal_stress_control=false;
 	shear_stress_control=false;
+    normal_strain_control=false;
 	gradT_control=false;
+    stick_slip = false;
+    shear_work_control = false;
     
     earth_pressure = 0.0;
     tilt_speed = 0.0;
@@ -72,6 +75,8 @@ void Ccell::predictor(double dt,double dt2_on_2)
 			Yshift = Vdilat*dt + Adilat*dt2_on_2;
 			double max_shift = DILAT_LIMIT*L.x[1] * dt;
 			if(Yshift > max_shift) Yshift = max_shift;
+            if(Yshift < -1.0* max_shift) Yshift = -1.0*max_shift;
+            
 			L.x[1] += Yshift;
 			Vdilat +=  Adilat*dt;
 		if( Vdilat < -DILAT_LIMIT*L.x[1]) Vdilat= -DILAT_LIMIT*L.x[1]; //limit cell velocity

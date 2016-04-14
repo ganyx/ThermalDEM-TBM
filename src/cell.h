@@ -74,6 +74,9 @@ class Ccell
 	void PRINT(); 					/**< Print some cell properties on screen.*/
 	friend ofstream &operator<<(ofstream &,Ccell);
 	friend ifstream & operator>>(ifstream &,Ccell &);
+    
+    // HOLLOW_CYLINDER
+    double Rexternal, Rinternal, Height;
 };
 
 

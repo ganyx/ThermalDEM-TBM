@@ -34,8 +34,9 @@ cout<<endl<<endl<<"Version 2013 for Integrated DEM simulations"<<endl<<endl;
     cout<<"\tWALL_BOX_XYZ: controllable wall conditions at all directions."<<endl;
     cout<<"\tBALL_BOX: rough walls at x, y, and z-axis."<<endl;
     cout<<"\tBALL_BOX_Y: rough walls at y-axis, periodic conditions at x and z-axis."<<endl;
-    cout<<"\tCYLINDER: wall conditon with cyliderical container."<<endl;
+    cout<<"\tCYLINDER: wall conditon with a cyliderical container."<<endl;
     cout<<"\tPERIODIC_CYLINDER: periodic condition along cylinderical height."<<endl;
+    cout<<"\tHOLLOW_CYLINDER: wall conditon with a hollow cyliderical container."<<endl;
     cin>> BOUNDARY;
 
 //if(action!="CREATE" && action!="EVOLVE")

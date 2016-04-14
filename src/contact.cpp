@@ -57,10 +57,19 @@ bool Ccontact::AM_I_CONTACTING()
 	if(B >= 0) deltaN = dx - pA->R - pB->R;
     
     if(B<0 && pB->R == INFINITE){ // wall contact
-//       if(pB->R == INFINITE) // flat walls
-        dx = pB->nw*dX *(-1.0);
-//        if(dx<0) cout<<'.';
+//        dx = pB->nw*dX *(-1.0); //???? dX has been re-defined in Ccontact::set_me_in_main_cell().
         deltaN = dx - pA->R;
+    }
+    
+   // HOLLOW CYLINDER
+    if(B<0 && pB->R == INFINITE && (pB->id == -7 || pB->id == -8)){ // cylinderical wall contact, HOLLOW_CYLINDER
+        double xnorm = sqrt(pow(pA->X.x[0], 2.0) + pow(pA->X.x[2], 2.0));
+        
+// ***** CHECK !!!
+        if(pB->id== -7) deltaN = cell->Rexternal - xnorm - pA->R;
+        if(pB->id== -8) deltaN = xnorm - pA->R - cell->Rinternal;
+        
+//        if(deltaN <= -0.5*pA->R) deltaN = -0.5*pA->R; // Capping the force.
     }
     
 	if(LIQUID_TRANSFER && water_volume == 0.0) { // initial contact with sufficient water supply and smaller enough gap.
@@ -80,7 +89,17 @@ bool Ccontact::AM_I_CONTACTING()
 void Ccontact::EVALE_Geo()
 {	
 	nA= dX/dx;
-    if(B<0 && pB->R == INFINITE) nA = pB->nw *(-1.0);
+    if(B<0 && pB->R == INFINITE && pB->id >= -6) nA = pB->nw *(-1.0);
+
+    // ***** CHECK !!!
+    // HOLLOW_CYLINDER
+    if(B<0 && pB->R == INFINITE && (pB->id == -7 || pB->id == -8)) {
+        Cvector ntemp = pA->X;
+        ntemp.x[1] = 0.0;
+        if(pB->id == -7) nA = ntemp / ntemp.NORM()*(1.0);
+        if(pB->id == -8) nA = ntemp / ntemp.NORM()*(-1.0);
+    }
+    
 	RA = nA*pA->R;    
 	RB = nA*(-pB->R); 
 
@@ -372,7 +391,20 @@ void Ccontact::set_me_in_main_cell()
 {
 	Flag_Boundary = 0;
 	dX =	pB->X - pA->X;
-    if(B<0 && pB->R == INFINITE) dX = pB->nw*(pB->nw*dX); // contact between particle and flat wall
+    if(B<0 && pB->R == INFINITE)
+        dX = pB->nw*(pB->nw*dX); // contact between particle and flat wall
+    
+    if(B<0 && pB->R == INFINITE && cell->boundary == "HOLLOW_CYLINDER" &&
+       (pB->id == -7 || pB->id == -8))
+    { // HOLLOW CYLINDER, External and internal cylinder walls
+        Cvector CylinderWall = pA->X;
+        double scale = pB->X.x[0] / sqrt(pow(pA->X.x[0],2.0) + pow(pA->X.x[2],2.0));
+        CylinderWall.x[0] *= scale;
+        CylinderWall.x[2] *= scale;
+        
+        dX = CylinderWall - pA->X; // HOLLOW CYLINDER
+    }
+    
 	dV =	pB->V - pA->V;
 	dT =	pB->T - pA->T;
 	
