@@ -34,7 +34,7 @@ using namespace std; // for a easier use of cin and cout
 #define DILAT_LIMIT 0.001
 #define WALL_KD	5e-4
 #define WALL_DAMP 0.001
-#define GLOBAL_DAMPING	0.2
+#define GLOBAL_DAMPING	0.5
 #define LOCAL_DAMPLING	0.5
 
 //#define COMP_FRACTION 0.10 /**< Composite fraction, number fraction */

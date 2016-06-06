@@ -86,7 +86,6 @@ void Cvector::operator -=(Cvector para)
 {  for(int i=0;i<DIM;i++) x[i]-=para.x[i];}
 
 
-
 Cmatrix Cvector::Cross_Product_Matrix()
 {
   Cmatrix res ; 
