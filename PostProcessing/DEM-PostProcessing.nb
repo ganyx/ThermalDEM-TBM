@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      9484,        246]
-NotebookOptionsPosition[      9152,        229]
-NotebookOutlinePosition[      9510,        245]
-CellTagsIndexPosition[      9467,        242]
+NotebookDataLength[     10131,        265]
+NotebookOptionsPosition[      9799,        248]
+NotebookOutlinePosition[     10157,        264]
+CellTagsIndexPosition[     10114,        261]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -21,7 +21,12 @@ Notebook[{
 
 Cell[CellGroupData[{
 Cell[BoxData[
- RowBox[{"\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Post", " ", "Processing", " ", "script", " ", "file", " ", "for", " ", 
+    "DEM", " ", "simulations"}], " ", "*)"}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
   RowBox[{"(*", " ", 
    RowBox[{"Parameters", ",", " ", 
     RowBox[{
@@ -29,19 +34,21 @@ Cell[BoxData[
      "cases"}]}], " ", "*)"}], "\[IndentingNewLine]", 
   RowBox[{
    RowBox[{
-    RowBox[{"nFolder", "=", "\"\<VIBRATION/\>\""}], ";", " ", 
-    RowBox[{"(*", " ", 
+    RowBox[{"nFolder", "=", "\"\<VIBRATION/\>\""}], ";"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Folder", " ", "name", " ", "for", " ", "the", " ", "data", " ", "file"}],
+     " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"nPCol", " ", "=", "15"}], ";"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
      RowBox[{
-     "Folder", " ", "name", " ", "for", " ", "the", " ", "data", " ", 
-      "file"}], " ", "*)"}], "\[IndentingNewLine]", 
-    RowBox[{"nPCol", " ", "=", "15"}], ";", " ", 
-    RowBox[{"(*", " ", 
-     RowBox[{
-      RowBox[{
-      "Number", " ", "of", " ", "data", " ", "columns", " ", "in", " ", "the",
-        " ", "par_i", " ", "file"}], ",", " ", 
-      RowBox[{"Particle", " ", "information"}]}], " ", "*)"}], 
-    "\[IndentingNewLine]", 
+     "Number", " ", "of", " ", "data", " ", "columns", " ", "in", " ", "the", 
+      " ", "par_i", " ", "file"}], ",", " ", 
+     RowBox[{"Particle", " ", "information"}]}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
     RowBox[{"nCCol", " ", "=", "15"}], ";"}], " ", 
    RowBox[{"(*", " ", 
     RowBox[{
@@ -85,6 +92,15 @@ Cell[BoxData[
      RowBox[{"\"\<cont_\>\"", "<>", 
       RowBox[{"ToString", "[", "i", "]"}]}]}], ";"}], "\[IndentingNewLine]", 
    "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"nFile", "=", 
+     RowBox[{
+      RowBox[{"FileNames", "[", "\"\<pos_*\>\"", "]"}], "//", "Length"}]}], 
+    ";"}], 
+   RowBox[{"(*", 
+    RowBox[{
+    "Number", " ", "of", " ", "files", " ", "in", " ", "the", " ", "folder"}],
+     " ", "*)"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
    RowBox[{"(*", 
     RowBox[{"Read", " ", "file", " ", "function"}], " ", "*)"}], 
    "\[IndentingNewLine]", 
@@ -121,14 +137,15 @@ Cell[BoxData[
        RowBox[{"ImageSize", "\[Rule]", "500"}]}], "}"}]}], ";"}], 
    "\[IndentingNewLine]", 
    RowBox[{
-    RowBox[{"Color", "=", "0.66"}], ";", "  ", 
-    RowBox[{"(*", 
-     RowBox[{
-     "Hue", " ", "range", " ", "from", " ", "0", " ", "to", " ", "0.66"}], 
-     "*)"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
-    RowBox[{"(*", 
-     RowBox[{"Plot", " ", "function", " ", "for", " ", "particles"}], "*)"}], 
-    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"Color", "=", "0.66"}], ";"}], "  ", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Hue", " ", "range", " ", "from", " ", "0", " ", "to", " ", "0.66"}], 
+    "*)"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Plot", " ", "function", " ", "for", " ", "particles"}], "*)"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
     RowBox[{
      RowBox[{"Par", "[", "n_", "]"}], ":=", 
      RowBox[{"{", "\[IndentingNewLine]", 
@@ -178,7 +195,7 @@ Cell[BoxData[
      RowBox[{"Show", "[", 
       RowBox[{"Par", "[", "i", "]"}], "]"}], ",", 
      RowBox[{"{", 
-      RowBox[{"i", ",", "1", ",", "8", ",", "1"}], "}"}]}], 
+      RowBox[{"i", ",", "1", ",", "nFile", ",", "1"}], "}"}]}], 
     "]"}]}]}]], "Input",
  CellChangeTimes->{{3.674417608110259*^9, 3.674417767748053*^9}, {
    3.674417811872858*^9, 3.674417896054777*^9}, {3.6744179295693417`*^9, 
@@ -186,22 +203,23 @@ Cell[BoxData[
    3.6744184324119883`*^9, 3.6744185748025217`*^9}, {3.6744186266350517`*^9, 
    3.674418767143505*^9}, {3.6744188103454733`*^9, 3.67441881921034*^9}, {
    3.674418859138475*^9, 3.674418990445682*^9}, {3.674419041883246*^9, 
-   3.674419074282157*^9}, 3.674432050009714*^9}],
+   3.674419074282157*^9}, 3.674432050009714*^9, {3.674445016840495*^9, 
+   3.674445124119584*^9}}],
 
 Cell[BoxData[
  TagBox[
   StyleBox[
-   DynamicModuleBox[{$CellContext`i$$ = 5, Typeset`show$$ = True, 
+   DynamicModuleBox[{$CellContext`i$$ = 4, Typeset`show$$ = True, 
     Typeset`bookmarkList$$ = {}, Typeset`bookmarkMode$$ = "Menu", 
     Typeset`animator$$, Typeset`animvar$$ = 1, Typeset`name$$ = 
     "\"untitled\"", Typeset`specs$$ = {{
       Hold[$CellContext`i$$], 1, 8, 1}}, Typeset`size$$ = {
-    500., {296., 301.}}, Typeset`update$$ = 0, Typeset`initDone$$, 
-    Typeset`skipInitDone$$ = True, $CellContext`i$54753$$ = 0}, 
+    500., {254., 259.}}, Typeset`update$$ = 0, Typeset`initDone$$, 
+    Typeset`skipInitDone$$ = True, $CellContext`i$746$$ = 0}, 
     DynamicBox[Manipulate`ManipulateBoxes[
      1, StandardForm, "Variables" :> {$CellContext`i$$ = 1}, 
       "ControllerVariables" :> {
-        Hold[$CellContext`i$$, $CellContext`i$54753$$, 0]}, 
+        Hold[$CellContext`i$$, $CellContext`i$746$$, 0]}, 
       "OtherVariables" :> {
        Typeset`show$$, Typeset`bookmarkList$$, Typeset`bookmarkMode$$, 
         Typeset`animator$$, Typeset`animvar$$, Typeset`name$$, 
@@ -210,7 +228,7 @@ Cell[BoxData[
         $CellContext`Par[$CellContext`i$$]], 
       "Specifications" :> {{$CellContext`i$$, 1, 8, 1}}, "Options" :> {}, 
       "DefaultOptions" :> {}],
-     ImageSizeCache->{545., {354., 359.}},
+     ImageSizeCache->{545., {312., 317.}},
      SingleEvaluation->True],
     Deinitialization:>None,
     DynamicModuleValues:>{},
@@ -224,11 +242,12 @@ Cell[BoxData[
  CellChangeTimes->{{3.674418755543174*^9, 3.674418767745696*^9}, 
    3.6744188198674393`*^9, {3.67441887842864*^9, 3.6744189304181223`*^9}, {
    3.67441896758346*^9, 3.674418991157364*^9}, {3.6744190461901913`*^9, 
-   3.674419074790811*^9}, {3.67443204174893*^9, 3.67443205227162*^9}}]
+   3.674419074790811*^9}, {3.67443204174893*^9, 3.67443205227162*^9}, 
+   3.6744450408974543`*^9, 3.6744450816277027`*^9, 3.674940466938725*^9}]
 }, Open  ]]
 },
 WindowSize->{808, 911},
-WindowMargins->{{Automatic, 306}, {Automatic, 60}},
+WindowMargins->{{Automatic, 507}, {Automatic, 33}},
 FrontEndVersion->"10.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (December 4, \
 2014)",
 StyleDefinitions->"Default.nb"
@@ -245,8 +264,8 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 6727, 166, 692, "Input"],
-Cell[7310, 190, 1826, 36, 764, "Output"]
+Cell[580, 22, 7304, 184, 743, "Input"],
+Cell[7887, 208, 1896, 37, 646, "Output"]
 }, Open  ]]
 }
 ]
